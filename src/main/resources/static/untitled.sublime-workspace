@@ -1,0 +1,252 @@
+{
+	"auto_complete":
+	{
+		"selected_items":
+		[
+			[
+				"j",
+				"jsx"
+			]
+		]
+	},
+	"buffers":
+	[
+		{
+			"file": "sam-konva-stage.html",
+			"settings":
+			{
+				"buffer_size": 1853,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "/Users/eviewlake/Downloads/long_text_2018-01-14.txt",
+			"settings":
+			{
+				"buffer_size": 11796,
+				"line_ending": "Unix"
+			}
+		}
+	],
+	"build_system": "",
+	"command_palette":
+	{
+		"height": 0.0,
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"console":
+	{
+		"height": 0.0
+	},
+	"distraction_free":
+	{
+		"menu_visible": true,
+		"show_minimap": false,
+		"show_open_files": false,
+		"show_tabs": false,
+		"side_bar_visible": false,
+		"status_bar_visible": false
+	},
+	"file_history":
+	[
+		"/Users/eviewlake/textpath.html",
+		"/Users/eviewlake/dianfanbao.java",
+		"/Users/eviewlake/Documents/tianfangskill/whiteboardjs/node_modules/webpack-dev-server/client/index.js",
+		"/Users/eviewlake/diff/diff/white/whiteboard/src/components/Toolbar2/index.jsx",
+		"/Users/eviewlake/diff/diff/electron/tbedu-classroom/app/js/components/RosterView/index.jsx",
+		"/Users/eviewlake/dianfanbao",
+		"/Users/eviewlake/Documents/tianfangskill/interview/baseinterview/web/src/main/webapp/static/alibole-code/src/p/interviewee/index.html",
+		"/Users/eviewlake/diff/diff/electron/tbedu-classroom/app/js/components/Toolbar2/index.jsx",
+		"/Users/eviewlake/Documents/tianfangskill/tengxundemo/android/iLiveSDK_Android_LiveDemo/app/build.gradle",
+		"/Users/eviewlake/Documents/tianfangskill/tengxundemo/android/iLiveSDK_Android_Suixinbo/build.gradle",
+		"/Users/eviewlake/Documents/tianfangskill/tengxundemo/android/iLiveSDK_Android_Suixinbo/gradle/wrapper/gradle-wrapper.properties",
+		"/Users/eviewlake/Documents/tianfangskill/tengxundemo/android/iLiveSDK_Android_LiveDemo/gradle/wrapper/gradle-wrapper.properties",
+		"/Users/eviewlake/Documents/tianfangskill/tengxundemo/android/BaseLayoutApplication/gradle/wrapper/gradle-wrapper.properties",
+		"/Users/eviewlake/Documents/tianfangskill/tengxundemo/android/CallSDK_Android_Demo/calldemo/src/main/java/com/tencent/calldemo/ContactActivity.java",
+		"/Users/eviewlake/Documents/tianfangskill/tengxundemo/android/CallSDK_Android_Demo/calldemo/src/main/java/com/tencent/calldemo/CallActivity.java",
+		"/Users/eviewlake/Documents/tianfangskill/tengxundemo/android/CallSDK_Android_Demo/app/src/main/res/layout/activity_mainmenu.xml",
+		"/Users/eviewlake/diff/diff/electron/tbedu-classroom/app/lib/apush/client.js",
+		"/Users/eviewlake/Documents/tianfangskill/whiteboardjs/package.json",
+		"/Users/eviewlake/Documents/tianfangskill/whiteboardjs/webpack.config.js",
+		"/Users/eviewlake/Documents/tianfangskill/whiteboardjs/app/components/ReduxContainer.jsx",
+		"/Users/eviewlake/Documents/tianfangskill/whiteboardjs/app/helper/MessageUtils.jsx",
+		"/Users/eviewlake/Documents/tianfangskill/whiteboardjs/app/components/Shape/index.jsx",
+		"/Users/eviewlake/Documents/tianfangskill/whiteboardjs/app/helper/ossAuth.jsx",
+		"/Users/eviewlake/Documents/tianfangskill/whiteboardjs/app/pages/whiteboard/index.html",
+		"/Users/eviewlake/eclipse-workspace/educationserver/tbedu-onedu/tbedu-cloud/start/pom.xml",
+		"/Users/eviewlake/jspack/webpack3hotserverwhite/webpack.config.js",
+		"/Users/eviewlake/jspack/webpack3hotserverwhite/package.json",
+		"/Users/eviewlake/jspack/webpack3hotserverwhite/app/component.js",
+		"/Users/eviewlake/jspack/webpack2hotserver/app/component.js",
+		"/Users/eviewlake/jspack/webpack2hotserver/webpack.config.js",
+		"/Users/eviewlake/jspack/webpack2hotserver/package.json",
+		"/Users/eviewlake/jspack/webpack1/app/component.js",
+		"/Users/eviewlake/jspack/webpack1/app/main.js",
+		"/Users/eviewlake/eclipse-workspace/educationserver/tbedu-onedu/tbedu-cloud/start/src/main/resources/logback-spring.xml",
+		"/Users/eviewlake/eclipse-workspace/educationserver/tbedu-onedu/tbedu-cloud/classroom/pom.xml",
+		"/Users/eviewlake/eclipse-workspace/educationserver/tbedu-onedu/tbedu-cloud/parent/pom.xml"
+	],
+	"find":
+	{
+		"height": 35.0
+	},
+	"find_in_files":
+	{
+		"height": 0.0,
+		"where_history":
+		[
+		]
+	},
+	"find_state":
+	{
+		"case_sensitive": false,
+		"find_history":
+		[
+			"layer",
+			"onSocketMsg",
+			"teacher_view",
+			"TAG",
+			"bTLSAccount",
+			"mybat",
+			"ibastic"
+		],
+		"highlight": true,
+		"in_selection": false,
+		"preserve_case": false,
+		"regex": false,
+		"replace_history":
+		[
+		],
+		"reverse": false,
+		"show_context": true,
+		"use_buffer2": true,
+		"whole_word": false,
+		"wrap": true
+	},
+	"groups":
+	[
+		{
+			"selected": 0,
+			"sheets":
+			[
+				{
+					"buffer": 0,
+					"file": "sam-konva-stage.html",
+					"settings":
+					{
+						"buffer_size": 1853,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								1696,
+								1701
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/HTML/HTML.tmLanguage",
+							"tab_size": 2,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 581.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				},
+				{
+					"buffer": 1,
+					"file": "/Users/eviewlake/Downloads/long_text_2018-01-14.txt",
+					"settings":
+					{
+						"buffer_size": 11796,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								0,
+								11796
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/HTML/HTML.tmLanguage",
+							"tab_size": 2,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				}
+			]
+		}
+	],
+	"incremental_find":
+	{
+		"height": 0.0
+	},
+	"input":
+	{
+		"height": 31.0
+	},
+	"layout":
+	{
+		"cells":
+		[
+			[
+				0,
+				0,
+				1,
+				1
+			]
+		],
+		"cols":
+		[
+			0.0,
+			1.0
+		],
+		"rows":
+		[
+			0.0,
+			1.0
+		]
+	},
+	"menu_visible": true,
+	"replace":
+	{
+		"height": 0.0
+	},
+	"save_all_on_build": true,
+	"select_file":
+	{
+		"height": 0.0,
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"select_project":
+	{
+		"height": 0.0,
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"show_minimap": false,
+	"show_open_files": false,
+	"show_tabs": true,
+	"side_bar_visible": true,
+	"side_bar_width": 331.0,
+	"status_bar_visible": true
+}
