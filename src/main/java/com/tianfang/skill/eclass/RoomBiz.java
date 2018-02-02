@@ -19,6 +19,12 @@ public class RoomBiz {
 	@Autowired
     private SamRedisService redisService;
 	
+	@Autowired
+    private WsConnect2OtherLBServer lbwsclient;
+	
+
+	
+	
 	private static SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss SS");
 
 	
@@ -32,9 +38,10 @@ public class RoomBiz {
 		String connetionID = session.getId();
 
 		HashSet thisClassroom = (HashSet)allClassRoomsConnecions.get(className);
-		if(thisClassroom == null)
+		if(thisClassroom == null) {
 			allClassRoomsConnecions.put(className, new HashSet());
-		
+			thisClassroom = (HashSet)allClassRoomsConnecions.get(className);
+		}
 		thisClassroom.add(new UserSession(userIdToken,session));  
 		
 		System.out.println("new Connection:" + thisClassroom.size()+  " " + connetionID + " " + className + " " + userIdToken);
@@ -44,10 +51,25 @@ public class RoomBiz {
 	
 	public void oldStudentQuit(Session session) {
 
-		System.out.println("onclose  websocke ..");
+		System.out.println("onclose sessioin... ..");
+		
+		Iterator it = allClassRoomsConnecions.values().iterator();  
+        while (it.hasNext()) {  	 
+        	  
+        	   HashSet oneClassRoomSessions = (HashSet) it.next();
+        	   
+       		Iterator them = oneClassRoomSessions.iterator();  
+            while (them.hasNext()) {  
+            	 UserSession temp =(UserSession) them.next();
+            	 if(temp.session == session)  {
+            		 oneClassRoomSessions.remove(temp);  //找打这个session,删除它. 
+            		 System.out.println("this session found and ....removed");
 
-//		HashSet thisClassroom = (HashSet)allClassRoomsConnecions.get(className);
-//		thisClassroom.remove(aSession);
+            	 }
+            }
+        	
+        	
+        }
 		
 	}
 	
@@ -73,14 +95,64 @@ public class RoomBiz {
 			String jsondata = jsonObject.getString("jsondata");
 			String userId = jsonObject.getString("userid"); //for lock update		
 			
-			
+			System.out.println("----------------本地client push开始....");
+
 			pushMessageToClassmates(className,jsondata,session);
-			
+
+			System.out.println("----------------保存redis开始.....");
+
 			saveThisDraw(className,viewId,shapeId,userId,jsondata);
+
+			System.out.println("----------------通知其他LB 开始.....");
+
+			pushToOtherLBServer(message);
 
 		
 		}catch (Exception ee) {ee.printStackTrace();}
 		
+		
+	}
+	
+	public void fromlbpushToEachLocalClients(String message) {
+		try {
+			
+			JSONObject jsonObject = JSONObject.parseObject(message);
+			String className = jsonObject.getString("eclassname"); // when user login and choose one classroom from his schedule just bought. 
+			String jsondata = jsonObject.getString("jsondata");
+
+			HashSet thisClassroom = (HashSet)allClassRoomsConnecions.get(className);
+			
+			if(thisClassroom!=null && thisClassroom.size()!=0) //这个LB 已经有这个classroom 的学生了.
+			{
+	      		System.out.println("fromlbpushToEachLocalClients: " + thisClassroom.size() + " " + df.format(new Date()));
+	
+				Iterator it = thisClassroom.iterator();  
+		        while (it.hasNext()) {  	            
+		            UserSession temp = (UserSession)it.next();
+		            try {
+			          	temp.session.getBasicRemote().sendText(jsondata);  //one shape
+			            
+		            }catch (Exception ee) {
+		                    System.out.println("fromlbpushToEachLocalClients" + "send error to client" +  temp.userID +"  " +ee.getMessage());
+		                    removeThisSessionFromServer(className, temp);
+		         		   }
+		        }
+			}else  	 System.out.println("fromlbpushToEachLocalClients: 没有目标教室的学生需要推送" + df.format(new Date()));
+
+	            
+        }  
+        catch (Exception eee) {eee.printStackTrace();}
+    
+		
+	}
+	
+	private void pushToOtherLBServer(String message) {
+		//get LBserver IP list
+		//make WS connecion to LBServer List
+		//keep the list of LBWSConnecions
+		//push jsondata to each LBServer here.
+		
+		lbwsclient.pushToOtherLBServer(message);
 		
 	}
 	
@@ -89,14 +161,14 @@ public class RoomBiz {
 
 		try {
 			HashSet thisClassroom = (HashSet)allClassRoomsConnecions.get(className);
-	
+      		System.out.println(thisClassroom.size() + " " + df.format(new Date()));
+
 			Iterator it = thisClassroom.iterator();  
 	        while (it.hasNext()) {  	            
 	            UserSession temp = (UserSession)it.next();
 	            try {
 		            if(temp.session != session) { //不能发给自己了.
 		          		temp.session.getBasicRemote().sendText(jsondata);  //one shape
-		          		System.out.println(thisClassroom.size() + " " + df.format(new Date()));
 		            }
 	            }catch (Exception ee) {
 	                    System.out.println("send error to client" +  temp.userID +"  " +ee.getMessage());

@@ -8,10 +8,14 @@ import org.springframework.context.ConfigurableApplicationContext;
 
 public class TianfangEclassApplication {
 
+	
 	public static void main(String[] args) {
 		ConfigurableApplicationContext  aa = SpringApplication.run(TianfangEclassApplication.class, args);
 			
-	      SamWebSocket1.setAppContext(aa);	 
-		 
+	      SamWebSocket1.setAppContext(aa);	
+
+	      WsConnectionLBServer  wsLbServer= (WsConnectionLBServer) aa.getBean(WsConnectionLBServer.class);
+	      wsLbServer.startServer();
+	        
 	}
 }

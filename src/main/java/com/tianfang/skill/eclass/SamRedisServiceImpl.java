@@ -1,6 +1,7 @@
 package com.tianfang.skill.eclass;
 
 import java.util.List;
+import java.util.Set;
 
 import javax.annotation.Resource;
 
@@ -28,8 +29,6 @@ public class SamRedisServiceImpl implements SamRedisService {
     	return redisTemplate.opsForValue().multiGet(keys);
     	
     }
-
-    
     
     
 
@@ -40,10 +39,28 @@ public class SamRedisServiceImpl implements SamRedisService {
 
     public void leftPush(String key,Object value){
    
-    	   redisTemplate.opsForList().leftPush(key, value);
-    	
+ 	   redisTemplate.opsForList().leftPush(key, value);
+ 	   
     }
 
     
+    public void addSet(String key,String value){
+    	   
+  	   redisTemplate.opsForSet().add(key, value);
+  	   
+     }
+    
+    
+    public void removeSet(String key,String value){
+    	   
+  	   redisTemplate.opsForSet().remove(key, value);
+  	   
+     } 
+    
+    public Set getSet(String key){
+    	   
+  	    return  redisTemplate.opsForSet().members(key);
+  	   
+     } 
     
 }
