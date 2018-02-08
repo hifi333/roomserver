@@ -30,6 +30,11 @@ public class SamRedisServiceImpl implements SamRedisService {
     	
     }
     
+    public void deleteKey(String key) {
+        redisTemplate.delete(key);
+    	
+    }
+    
     
 
     public List getList(String key) {
@@ -47,7 +52,7 @@ public class SamRedisServiceImpl implements SamRedisService {
     public void addSet(String key,String value){
     	   
   	   redisTemplate.opsForSet().add(key, value);
-  	   
+  	     	   
      }
     
     
@@ -56,6 +61,12 @@ public class SamRedisServiceImpl implements SamRedisService {
   	   redisTemplate.opsForSet().remove(key, value);
   	   
      } 
+    
+    public long removeSet(String key,Set values){
+ 	   
+   	   return redisTemplate.opsForSet().remove(key, values.toArray());
+   	   
+      } 
     
     public Set getSet(String key){
     	   

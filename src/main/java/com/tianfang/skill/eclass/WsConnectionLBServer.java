@@ -50,7 +50,10 @@ public class WsConnectionLBServer  {
 			public void onStart() {System.out.println( "WsConnectionLBServer onStart ");  }
 		
 			@Override  
-		    public void onOpen( WebSocket conn, ClientHandshake handshake ) {   System.out.println( "WsConnectionLBServer onOpen for new client");  }  
+		    public void onOpen( WebSocket conn, ClientHandshake handshake ) { 
+				System.out.println( "WsConnectionLBServer onOpen for new client"); 
+			
+			}  
 		  
 		    @Override  
 		    public void onClose( WebSocket conn, int code, String reason, boolean remote ) {  System.out.println( "WsConnectionLBServer onClose ");  }  
@@ -58,8 +61,9 @@ public class WsConnectionLBServer  {
 		    @Override  
 		    public void onMessage( WebSocket conn, String message ) {  
 		    	try {  
-				   System.out.println("----------------接收到 其他的通知LB:" + df.format(new Date()));
+				 //  System.out.println("----------------接收到 其他的通知LB:" + df.format(new Date()));
 		          	myRoomBiz.fromlbpushToEachLocalClients(message);
+		          	
 		        } catch ( Exception ex ) {  
 		            ex.printStackTrace();  
 		        }  

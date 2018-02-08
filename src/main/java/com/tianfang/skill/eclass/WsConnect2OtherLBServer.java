@@ -136,7 +136,7 @@ public class WsConnect2OtherLBServer {
 				   oneLbWsclient = it.next();
 				  if(oneLbWsclient.targetip != localLbServerIP)
 				  {
-					  System.out.println("----------------通知LB:" + oneLbWsclient.targetip);
+					 // System.out.println("----------------通知LB:" + oneLbWsclient.targetip);
 					  oneLbWsclient.send(message);
 				  }
 			  }catch (Exception ee) {
