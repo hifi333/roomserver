@@ -136,8 +136,8 @@ public class RoomBiz {
 			saveUpdateView(className,viewId,payload);
 
 			//切换本堂课当前打开的view
-			String currentviewid_rediskey = className+"-openingViewid";
-			redisService.set(currentviewid_rediskey,viewId);
+			//String currentviewid_rediskey = className+"-openingViewid";
+			redisService.set(this.redisKey_4OneClassOpeningViewId(className),viewId);
 				
 		}else if(xmethod.equals("switchView")) {
 			String viewId = messagejsonObject.getString("viewId");
@@ -220,7 +220,7 @@ public class RoomBiz {
 			String className = messagejsonObject.getString("eclassname");
 			HashSet thisClassroom = (HashSet)allClassRoomsConnecions.get(className);
       		//System.out.println(thisClassroom.size() + " " + df.format(new Date()));
-
+            if(thisClassroom ==null) return; //没有其他client, 应该在第一个人进入的时候, 就要初始化.. todo, 后面改.
 			Iterator it = thisClassroom.iterator();  
 	        while (it.hasNext()) {  	            
 	            UserSession temp = (UserSession)it.next();
