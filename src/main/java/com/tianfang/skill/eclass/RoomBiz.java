@@ -81,14 +81,13 @@ public class RoomBiz {
 	public void oneStudentDraw( String message,Session session) {
 		
 		try {
-			
 
-	    	    if(message.indexOf("ping")!=-1) 
-	    	    {
-	    	    	   return;
-	    	    }
-			
-	    	    JSONObject messagejsonObject = JSONObject.parseObject(message);
+			if(message.indexOf("ping")!=-1)
+			{
+				   return;
+			}
+
+			JSONObject messagejsonObject = JSONObject.parseObject(message);
 
     	    
 			//System.out.println("----------------本地client push开始....");
@@ -108,6 +107,10 @@ public class RoomBiz {
 		
 		
 	}
+	private void cloneBanshuViewToRoom(String banshuClassName, String viewId, String roomClassName){
+
+
+	}
 	
 	private void save2Redis(JSONObject messagejsonObject, String message) {
 		
@@ -120,6 +123,7 @@ public class RoomBiz {
 			String shapeId = messagejsonObject.getString("shapeId");
 			String payload = messagejsonObject.getString("payload");
 
+			System.out.println("updateShape:" + message);
 			saveUpdateShape(className,viewId,shapeId,payload);
 
 			
@@ -281,11 +285,30 @@ public class RoomBiz {
 	private String redisKey_4OneClassUserlocklist(String className) {
 		return "redisKey_" + className + "-" + "userlockslist" ;
 	}
-	
-	
-	
-	
-   private void saveUpdateView(String className,String viewId,String payload) {
+
+	private String make_redisKey_4OneTeacherKejianKu(String teacheruserid){
+		return "redisKey_" + teacheruserid + "-" + "kejianku" ;
+	}
+	private String make_redisKey_4OneTeacherBanshuKu(String teacheruserid){
+		return "redisKey_" + teacheruserid + "-" + "banshuku" ;
+	}
+
+	private String make_redisKey_4OneTeacherRoomboardsku(String pk) {
+		return "redisKey_" + pk;
+
+	}
+	private String redisKey_4OneTeacherKejianKu_public(){
+		return "redisKey_"   + "kejainku_public" ;
+
+	}
+	private String redisKey_4OneTeacherBanshunKu_public(){
+		return "redisKey_"   + "banshuku_public" ;
+
+	}
+
+
+
+	private void saveUpdateView(String className,String viewId,String payload) {
 	  	
 		String redisKey_4OneClassViewIdList = redisKey_4OneClassViewIdsList(className);
 		String redisKey_4OneViewId = redisKey_4OneViewId(className,viewId);
@@ -470,6 +493,15 @@ public class RoomBiz {
 		//System.out.println("loadeclasswhiteboardobjects:"+className +"   " +  temp);
 		return temp;
 	}
+
+	public String loadebanshukuobjects(String teacheruserid){
+
+    	String classroom = teacheruserid + "_" + "beikefakeclassname";
+    	return this.loadeclasswhiteboardobjects(classroom);
+
+	}
+
+
 	private String createDefaulteClassroom(String timetableclassname)
 	{
 		String defaultviewid = timetableclassname +"defaultviewid";
@@ -518,10 +550,135 @@ public class RoomBiz {
 		
 	}
 
-    
-    
-    
-	
+    ////////////////////////////////////////////////////////////Teacher profile data.
+/*
+	kejianku= {
+		"subjectlist": [
+		{
+			"subjectname": "初三数学hide",
+				"tohide":0,
+				"categorylist": [
+			{
+				"categoryname": "函数",
+					"kejianlist": [
+				{"type": "234","kejianname":"一元函数", "path": "xiongmao.jpg"},
+				{"type": "234","kejianname":"三角形", "path": "computer/yun.png"},
+				{"type": "234","kejianname":"一元函数", "path": "computer/yun.png"},
+				{"type": "234","kejianname":"三角形", "path": "computer/yun.png"}
+                                        ]
+			}
+
+                                ]
+		},
+
+		 {
+			"subjectname": "初三科学",
+					"tohide":0,
+					"categorylist": [
+			{
+				"categoryname": "重力",
+					"kejianlist": [
+				{"type": "image", "kejianname":"重力G", "path": "computer/yun.png"}
+                                        ]
+			},
+			{
+				"categoryname": "摩擦力",
+					"kejianlist": [
+				{"type": "image", "path": "computer/yun.png"},
+				{"type": "image", "kejianname":"摩擦力分类", "path": "computer/yun.png"}
+                                        ]
+			}
+
+                                ]
+		}
+
+
+
+                        ]
+	};
+	*/
+
+	public String loadteacherkejianku(String teacheruserid )
+	{
+		// 从redis 里读取所有json字符串数据， 转成json对象， 然后联合成整体json 字符串返回。
+
+		String redisKey_4OneTeacherKejianKu = make_redisKey_4OneTeacherKejianKu(teacheruserid);
+
+		String kejiankuJsonString =  (String)redisService.get(redisKey_4OneTeacherKejianKu);
+
+		if(kejiankuJsonString ==null) //老师第一次进来, 还没有自己的课件库, 系统给他分配一个缺省的课件库, 以后他可以自己修改定制
+		{
+			//系统要有外部工具来维护这个公共课件库
+			//服务器启动的时候, 要初始化一个简单的公共课件库
+			//如何都没有,返回"",  客户端要自己初始化数据结构.
+			kejiankuJsonString=  (String)redisService.get(redisKey_4OneTeacherKejianKu_public());
+
+		}
+
+		System.out.println("kejiankuJsonString:" + kejiankuJsonString);
+
+		return kejiankuJsonString;
+
+	}
+
+	public String loadteacherbansuku(String teacheruserid )
+	{
+		// 从redis 里读取所有json字符串数据， 转成json对象， 然后联合成整体json 字符串返回。
+
+		String redisKey_4OneTeacherBanshuKu = make_redisKey_4OneTeacherBanshuKu(teacheruserid);
+
+		String banshukuJsonString =  (String)redisService.get(redisKey_4OneTeacherBanshuKu);
+
+		if(banshukuJsonString ==null) //老师第一次进来, 还没有自己的课件库, 系统给他分配一个缺省的课件库, 以后他可以自己修改定制
+		{
+			//系统要有外部工具来维护这个公共课件库
+			//服务器启动的时候, 要初始化一个简单的公共课件库
+			//如何都没有,返回"",  客户端要自己初始化数据结构.
+			banshukuJsonString=  (String)redisService.get(redisKey_4OneTeacherBanshunKu_public());
+
+		}
+
+		System.out.println("banshukuJsonString:" + banshukuJsonString);
+
+		return banshukuJsonString;
+
+	}
+
+	public String loadteacherroomboardsku(String teacherUesrId_loginClassname){
+		// 从redis 里读取所有json字符串数据， 转成json对象， 然后联合成整体json 字符串返回。
+
+		String temp =  (String)redisService.get(this.make_redisKey_4OneTeacherRoomboardsku(teacherUesrId_loginClassname));
+		System.out.println("loadteacherroomboardsku:"   + teacherUesrId_loginClassname);
+		System.out.println("loadteacherroomboardsku:"   + temp);
+
+		return temp;
+
+
+	}
+
+	public void saveteacherkejianku(String teacheruserid, String kejiankujsonstring){
+
+		String redisKey_4OneTeacherKejianKu = make_redisKey_4OneTeacherKejianKu(teacheruserid);
+		redisService.set(redisKey_4OneTeacherKejianKu,kejiankujsonstring);
+
+	}
+
+	public void saveteacherbanshuku(String teacheruserid, String banshukujsonstring){
+
+		String redisKey_4OneTeacherBanshuKu = make_redisKey_4OneTeacherBanshuKu(teacheruserid);
+		redisService.set(redisKey_4OneTeacherBanshuKu,banshukujsonstring);
+
+	}
+	public void saveteacherroomboardsku(String teacherUesrId_loginClassname, String roomboardskujsonstring){
+
+
+		String redisKey= make_redisKey_4OneTeacherRoomboardsku(teacherUesrId_loginClassname);
+
+		redisService.set(redisKey,roomboardskujsonstring);
+
+	}
+
+
 }
 
 class UserSession{
