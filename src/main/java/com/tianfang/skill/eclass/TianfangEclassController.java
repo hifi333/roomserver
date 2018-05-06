@@ -93,9 +93,36 @@ public class TianfangEclassController {
 	}
 
 
+	@RequestMapping(value= "/login", method=RequestMethod.POST)
+	@ResponseBody
+	public String login(@RequestBody JSONObject loginmeta)
+	{
 
-	
-	@RequestMapping(value= "/test123", method=RequestMethod.POST)
+		String result ="";
+//		samAutowiredRoomBiz.saveteacherroomboardsku(teacherUesrId_loginClassname, roomboardsku.toJSONString());
+
+		String userid = (String)loginmeta.get("userid");
+		String password = (String) loginmeta.get("password");
+
+		if(userid.equals("15372082863") && password.equals("saratoga"))
+			result=  "ok";
+		else
+			result= "fail";
+
+		System.out.println("login:" + loginmeta.toJSONString() + "---result:" + result);
+
+		return result;
+
+
+	}
+
+
+
+
+
+
+
+		@RequestMapping(value= "/test123", method=RequestMethod.POST)
 	@ResponseBody
 	public String test123(String timetableclassname, @RequestBody JSONObject shapesjson)
 	{
