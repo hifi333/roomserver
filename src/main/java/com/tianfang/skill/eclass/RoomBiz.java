@@ -48,7 +48,7 @@ public class RoomBiz {
 		}
 		thisClassroom.add(new UserSession(userIdToken,session));  
 		
-		System.out.println("new Connection:" + thisClassroom.size()+  " " + connetionID + " " + className + " " + userIdToken);
+		System.out.println("new student for this classroom:" + className  +" size:" + thisClassroom.size()+  " new student wssession:" + session.toString());
 
 		
 	}
@@ -123,7 +123,7 @@ public class RoomBiz {
 			String shapeId = messagejsonObject.getString("shapeId");
 			String payload = messagejsonObject.getString("payload");
 
-			System.out.println("updateShape:" + message);
+			//System.out.println("updateShape:" + message);
 			saveUpdateShape(className,viewId,shapeId,payload);
 
 			

@@ -28,7 +28,7 @@ public class WsConnectionLBServer  {
 	
 	private static SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss SS");
 
-	public static String lbiplist = "rediskey-LBIPLIST";
+	public static String rediskey_lbiplist = "rediskey-LBIPLIST1";
 
 	WebSocketServer lsWsServer=  null;
 	String localIP = null;
@@ -77,9 +77,11 @@ public class WsConnectionLBServer  {
     public void startServer() {
     	
     	//注册当前LB IP ..
-        redisService.addSet(lbiplist , localIP);        
-        System.out.println("注册LbServer:" + localIP);
-        this.lsWsServer.start();
+        redisService.addSet(WsConnectionLBServer.rediskey_lbiplist , localIP);
+        System.out.println("成功注册为LbServer:" + localIP);
+		System.out.println("当前系统所有LbServer列表:" + redisService.getSet(WsConnectionLBServer.rediskey_lbiplist));
+
+		this.lsWsServer.start();
         
         
     }

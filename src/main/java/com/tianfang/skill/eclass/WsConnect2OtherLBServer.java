@@ -49,13 +49,18 @@ public class WsConnect2OtherLBServer {
 			public void run() {
 				while(true){
 					//get all lbIP list from redis
-				     Set  allLBIPlist = redisService.getSet(WsConnectionLBServer.lbiplist); 
-				     System.out.println("found allLBIPlist:" + allLBIPlist + "lbserverWSClients:" + lbserverWSClients.size());
+				     Set  allLBIPlist = redisService.getSet(WsConnectionLBServer.rediskey_lbiplist);
+					Iterator it3 = allLBIPlist.iterator();
+					while(it3.hasNext()) {
+						System.out.println("allLBIPlist:" + it3.next());
+					}
+
+				     System.out.println("Connected to current LB's lbserverWSClients size:" + lbserverWSClients.size());
 				     
 				     Iterator<LbWebSocketClient> it = lbserverWSClients.iterator();
 					  while(it.hasNext()) {
 						  LbWebSocketClient temp = it.next();	
-						  System.out.println("LbWebSocketClient:" + temp.targetip);
+						  System.out.println("Connected to current LB's LBIP:" + temp.targetip);
 					  }
 				     
 			         if(!lbserverIPset.equals(allLBIPlist))  //LB server发生变化	
@@ -67,7 +72,7 @@ public class WsConnect2OtherLBServer {
 			        	 	makeLBConnectionClients(); //if(IP changed) keep new connection 
 			         }
 					 try {
-						Thread.sleep(10000);  //10秒扫一遍
+						Thread.sleep(60000);  //10秒扫一遍
 					}catch (Exception ee) {ee.printStackTrace();}
 				}
 				
@@ -209,7 +214,7 @@ class LbWebSocketClient extends WebSocketClient{
        @Override
        public void onClose(int arg0, String arg1, boolean arg2) {
            System.out.println("LbWebSocketClient链接已关闭.去除wsclient,去除redis "  +  this.targetip+ arg0 +"  " +arg1);
-           this.lbServer.redisService.removeSet(WsConnectionLBServer.lbiplist, this.targetip);
+           this.lbServer.redisService.removeSet(WsConnectionLBServer.rediskey_lbiplist, this.targetip);
            this.lbServer.lbserverWSClients.remove(this);
 
        }

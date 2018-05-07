@@ -104,8 +104,10 @@ public class TianfangEclassController {
 		String userid = (String)loginmeta.get("userid");
 		String password = (String) loginmeta.get("password");
 
-		if(userid.equals("15372082863") && password.equals("saratoga"))
-			result=  "ok";
+		if(userid.equals("15372082863") && password.equals("123"))
+			result=  "teacherok";
+		else if(userid.equals("13958003839") && password.equals("123"))
+			result=  "studentok";
 		else
 			result= "fail";
 
