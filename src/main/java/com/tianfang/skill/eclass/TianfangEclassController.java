@@ -28,68 +28,93 @@ public class TianfangEclassController {
 //	}
 
 	@RequestMapping("/loadeclasswhiteboardobjects")
-	public String loadeclasswhiteboardobjects(String timetableclassname) {
-		return samAutowiredRoomBiz.loadeclasswhiteboardobjects(timetableclassname);
+	public String loadeclasswhiteboardobjects(String t,String classname) {
+		JSONObject back  = checkSession(t);
+		if(!back.getBoolean("session"))  // session bad
+			return JSONObject.toJSONString(back);
+		else
+			return samAutowiredRoomBiz.loadeclasswhiteboardobjects(classname,back);
 	}
 
 	@RequestMapping("/loadebanshukuobjects")
-	public String loadebanshukuobjects(String teacheruserid) {
-		return samAutowiredRoomBiz.loadebanshukuobjects(teacheruserid);
+	public String loadebanshukuobjects(String t,String classname) {
+		JSONObject back  = checkSession(t);
+		if(!back.getBoolean("session"))  // session bad
+			return JSONObject.toJSONString(back);
+		else
+			return samAutowiredRoomBiz.loadebanshukuobjects(classname,back);
 	}
 
 
 
 	@RequestMapping("/loadteacherkejianku")
-	public String loadteacherkejianku(String teacheruserid) {
+	public String loadteacherkejianku(String t) {
 
-		return samAutowiredRoomBiz.loadteacherkejianku(teacheruserid);
+		JSONObject back  = checkSession(t);
+		if(!back.getBoolean("session"))  // session bad
+			return JSONObject.toJSONString(back);
+		else
+		return samAutowiredRoomBiz.loadteacherkejianku(back);
 	}
 
 	@RequestMapping("/loadteacherbansuku")
-	public String loadteacherbansuku(String teacheruserid) {
-		return samAutowiredRoomBiz.loadteacherbansuku(teacheruserid);
+	public String loadteacherbansuku(String t) {
+		JSONObject back  = checkSession(t);
+		if(!back.getBoolean("session"))  // session bad
+			return JSONObject.toJSONString(back);
+		else
+			return samAutowiredRoomBiz.loadteacherbansuku(back);
+
 	}
 
 	@RequestMapping("/loadteacherroomboardsku")
-	public String loadteacherroomboardsku(String teacherUesrId_loginClassname) {
-		return samAutowiredRoomBiz.loadteacherroomboardsku(teacherUesrId_loginClassname);
+	public String loadteacherroomboardsku(String t) {
+		JSONObject back  = checkSession(t);
+		if(!back.getBoolean("session"))  // session bad
+			return JSONObject.toJSONString(back);
+		else
+			return samAutowiredRoomBiz.loadteacherroomboardsku(back);
+
+
 	}
 
 
 
 	@RequestMapping(value= "/saveteacherkejianku", method=RequestMethod.POST)
 	@ResponseBody
-	public String saveteacherkejianku(String teacheruserid, @RequestBody JSONObject kejianku)
+	public String saveteacherkejianku(String t, @RequestBody JSONObject kejianku)
 	{
-
-		System.out.println("saveteacherkejianku:" + teacheruserid);
-		System.out.println("saveteacherkejianku:" + kejianku.toJSONString());
-		 samAutowiredRoomBiz.saveteacherkejianku(teacheruserid, kejianku.toJSONString());
-		 return "";
+		JSONObject back  = checkSession(t);
+		if(!back.getBoolean("session"))  // session bad
+			return JSONObject.toJSONString(back);
+		else
+			return samAutowiredRoomBiz.saveteacherkejianku(back, kejianku.toJSONString());
 	}
 
 
 
 	@RequestMapping(value= "/saveteacherbanshuku", method=RequestMethod.POST)
 	@ResponseBody
-	public String saveteacherbanshuku(String teacheruserid, @RequestBody JSONObject banshuku)
+	public String saveteacherbanshuku(String t, @RequestBody JSONObject banshuku)
 	{
+		JSONObject back  = checkSession(t);
+		if(!back.getBoolean("session"))  // session bad
+			return JSONObject.toJSONString(back);
+		else
+			return samAutowiredRoomBiz.saveteacherbanshuku(back, banshuku.toJSONString());
 
-		System.out.println("saveteacherkejianku:" + teacheruserid);
-		System.out.println("saveteacherkejianku:" + banshuku.toJSONString());
-		samAutowiredRoomBiz.saveteacherbanshuku(teacheruserid, banshuku.toJSONString());
-		return "";
 	}
 	@RequestMapping(value= "/saveteacherroomboardsku", method=RequestMethod.POST)
 	@ResponseBody
-	public String saveteacherroomboardsku(String teacherUesrId_loginClassname, @RequestBody JSONObject roomboardsku)
+	public String saveteacherroomboardsku(String t, @RequestBody JSONObject roomboardsku)
 	{
 
-		System.out.println("saveteacherroomboardsku:" + teacherUesrId_loginClassname);
-		System.out.println("saveteacherroomboardsku:" + roomboardsku.toJSONString());
+		JSONObject back  = checkSession(t);
+		if(!back.getBoolean("session"))  // session bad
+			return JSONObject.toJSONString(back);
+		else
+			return samAutowiredRoomBiz.saveteacherroomboardsku(back, roomboardsku.toJSONString());
 
-		samAutowiredRoomBiz.saveteacherroomboardsku(teacherUesrId_loginClassname, roomboardsku.toJSONString());
-		return "";
 	}
 
 
@@ -98,25 +123,68 @@ public class TianfangEclassController {
 	public String login(@RequestBody JSONObject loginmeta)
 	{
 
-		String result ="";
-//		samAutowiredRoomBiz.saveteacherroomboardsku(teacherUesrId_loginClassname, roomboardsku.toJSONString());
 
 		String userid = (String)loginmeta.get("userid");
 		String password = (String) loginmeta.get("password");
 
-		if(userid.equals("15372082863") && password.equals("123"))
-			result=  "teacherok";
-		else if(userid.equals("13958003839") && password.equals("123"))
-			result=  "studentok";
-		else
-			result= "fail";
+		String myRet = samAutowiredRoomBiz.login(userid,password);
 
-		System.out.println("login:" + loginmeta.toJSONString() + "---result:" + result);
-
-		return result;
-
+		System.out.println("Login:" + userid + " status:" + myRet);
+		return myRet;
 
 	}
+	private JSONObject checkSession(String token){
+
+
+		JSONObject back = new JSONObject();
+		String userId = (String)redisService.get(token);
+		if(userId!=null) {
+			back.put("session", true);
+			back.put("userId", userId);
+		}else
+			back.put("session", false);
+
+		return back;
+
+	}
+
+	@RequestMapping(value= "/loadlessontable", method=RequestMethod.POST)
+	@ResponseBody
+	public String loadlessontable(String token,@RequestBody JSONObject meta)
+	{
+		JSONObject back  = checkSession(token);
+		if(!back.getBoolean("session"))  // session bad
+			return JSONObject.toJSONString(back);
+		else
+		{
+			return  samAutowiredRoomBiz.loadlessontable(back);
+
+		}
+
+	}
+
+
+
+
+	@RequestMapping(value= "/joinclassroom", method=RequestMethod.POST)
+	@ResponseBody
+	public String joinclassroom(String token, @RequestBody JSONObject meta)
+	{
+
+		JSONObject back  = checkSession(token);
+		if(!back.getBoolean("session"))  // session bad
+			 return JSONObject.toJSONString(back);
+		else
+		{
+			String targetClassroom = (String)meta.get("targetClassroom");
+			int action =  meta.getIntValue("action");
+
+			return  samAutowiredRoomBiz.joinclassroom(back,targetClassroom,action);
+
+		}
+
+	}
+
 
 
 

@@ -1,19 +1,11 @@
 package com.tianfang.skill.eclass;
-import java.io.UnsupportedEncodingException;
 import java.net.InetAddress;
-import java.net.URI; 
-import java.net.URISyntaxException; 
-import java.nio.ByteBuffer; 
-import java.nio.channels.NotYetConnectedException;
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.net.URI;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Set;
 
-import org.java_websocket.WebSocket.READYSTATE; 
-import org.java_websocket.client.WebSocketClient; 
+import org.java_websocket.client.WebSocketClient;
 
 
 import org.java_websocket.handshake.ServerHandshake;
@@ -22,7 +14,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class WsConnect2OtherLBServer {
 	
-	HashSet<String>  lbserverIPset = new HashSet<String>();
+	HashSet<String> allLBIPlist_cached = new HashSet<String>();
 	//HashMap<String,LBClient>  lbserverWSClients = new HashMap<String,LBClient>();
 	HashSet<LbWebSocketClient>  lbserverWSClients = new HashSet<LbWebSocketClient>();
 
@@ -32,11 +24,13 @@ public class WsConnect2OtherLBServer {
 	
     public SamRedisService redisService;  //因为Java类会先执行构造方法，然后再给注解了@Autowired 的redisService注入值，
     //所以要在构造函数里使用别的@Autowired bean , 就需要在构造函数上加@Autowired, 然后把@Autowired 的Bean 通过参数传进来的.
+	RoomBiz samAutowiredRoomBiz;
 
 	@Autowired
-	public WsConnect2OtherLBServer(SamRedisService redisService){
+	public WsConnect2OtherLBServer(SamRedisService redisService,RoomBiz samAutowiredRoomBiz){
 		
 		this.redisService = redisService;
+		this.samAutowiredRoomBiz = samAutowiredRoomBiz;
 		
 		
 		try {
@@ -50,25 +44,41 @@ public class WsConnect2OtherLBServer {
 				while(true){
 					//get all lbIP list from redis
 				     Set  allLBIPlist = redisService.getSet(WsConnectionLBServer.rediskey_lbiplist);
-					Iterator it3 = allLBIPlist.iterator();
+//					Iterator it3 = allLBIPlist.iterator();
+//					while(it3.hasNext()) {
+//						System.out.println("allLBIPlist:" + it3.next());
+//					}
+
+
+
+					System.out.println("系统所有负载服务器allLBIPlist:" +allLBIPlist);
+
+					System.out.println("Connected to current host LB list:" + lbserverWSClients);
+
+
+					Set currentRunningClassroomset = samAutowiredRoomBiz.allClassRoomsConnecions.keySet();
+					System.out.println("Connected to current host classrooms:"+currentRunningClassroomset );
+
+					Iterator it3 = currentRunningClassroomset.iterator();
 					while(it3.hasNext()) {
-						System.out.println("allLBIPlist:" + it3.next());
+						String classroom = (String)it3.next();
+						Set  clientsforthisclassroom =(Set) samAutowiredRoomBiz.allClassRoomsConnecions.get(classroom);
+						System.out.println("Connect to current host clients(per classroom):" +classroom + "==>" + clientsforthisclassroom );
 					}
 
-				     System.out.println("Connected to current LB's lbserverWSClients size:" + lbserverWSClients.size());
+
+//				     Iterator<LbWebSocketClient> it = lbserverWSClients.iterator();
+//					  while(it.hasNext()) {
+//						  LbWebSocketClient temp = it.next();
+//						  System.out.println("Connected to current LB's LBIP:" + temp.targetip);
+//					  }
 				     
-				     Iterator<LbWebSocketClient> it = lbserverWSClients.iterator();
-					  while(it.hasNext()) {
-						  LbWebSocketClient temp = it.next();	
-						  System.out.println("Connected to current LB's LBIP:" + temp.targetip);
-					  }
-				     
-			         if(!lbserverIPset.equals(allLBIPlist))  //LB server发生变化	
+			         if(!allLBIPlist_cached.equals(allLBIPlist))  //LB server发生变化
 			         {
 			        	   System.out.println("update:" + allLBIPlist.toString());
-			        	   System.out.println("old:" + lbserverIPset.toString());
+			        	   System.out.println("old:" + allLBIPlist_cached.toString());
 			        	 
-			            lbserverIPset = (HashSet) allLBIPlist;
+			            allLBIPlist_cached = (HashSet) allLBIPlist;
 			        	 	makeLBConnectionClients(); //if(IP changed) keep new connection 
 			         }
 					 try {
@@ -106,7 +116,7 @@ public class WsConnect2OtherLBServer {
 	private void makeLBConnectionClients()
 	{
 		
-		  Iterator<String> it = lbserverIPset.iterator();
+		  Iterator<String> it = allLBIPlist_cached.iterator();
 		  
 		  while(it.hasNext()) {
 			  String lbIP =  it.next();
@@ -116,11 +126,9 @@ public class WsConnect2OtherLBServer {
 					 if(lbIP.equals(localLbServerIP))  //不能和自己链接
 						 continue;
 					  try {
-						  System.out.println("本地ip:" + localLbServerIP);
-						  System.out.println("目标ip:" + lbIP);
 						  LbWebSocketClient aa = new LbWebSocketClient(new URI("ws://"+ lbIP + ":" + lbwsPort),this);
-						  aa.connect();					  
-						  System.out.println("new LB conneciton:" +lbIP);
+						  aa.connect();
+						  System.out.println("本地ip:" + localLbServerIP +  "建立连接 TO 目标LB:" + lbIP + " OK");
 					  }catch (Exception ee) {ee.printStackTrace();}
 			    }
 			  
@@ -146,7 +154,7 @@ public class WsConnect2OtherLBServer {
 				  }
 			  }catch (Exception ee) {
 				  //todo remove this lbsession, 这个lbSever 下线了, 
-				  System.out.println("通知LB发生异常: 去除这个LB" + oneLbWsclient.targetip );
+				  System.out.println("通知LB发生异常: 去除这个LB? 不能把, 该咋办还在想呢" + oneLbWsclient.targetip );
 //				  lbserverWSClients.remove(lbip);
 //				  redisService.removeSet(WsConnectionLBServer.lbiplist, oneLbWsclient.lbIP);
 				  /*

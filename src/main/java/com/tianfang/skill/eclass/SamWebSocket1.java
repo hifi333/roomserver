@@ -24,7 +24,7 @@ import org.springframework.stereotype.Service;
 
 import com.alibaba.fastjson.JSONObject;
 
-@ServerEndpoint("/wstest")
+@ServerEndpoint("/w")
 @Service
 public class SamWebSocket1 {
 

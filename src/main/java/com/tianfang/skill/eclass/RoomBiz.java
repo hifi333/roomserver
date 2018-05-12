@@ -32,91 +32,121 @@ public class RoomBiz {
 	private static SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss SS");
 
 	
-	HashMap  allClassRoomsConnecions = new HashMap();
-	
+	public HashMap  allClassRoomsConnecions = new HashMap();
+
+	private String getUseridFromWsSession(Session session){
+		String openQuery = session.getQueryString();
+		//t=" + global.loginSessionToken + "&classroom=" +global.loginClassName
+		int  k = openQuery.indexOf("&");
+		String token = openQuery.substring(2,k);
+
+		//check ws session
+		String userId =(String)redisService.get(token);
+
+//		System.out.println("WSOpen:" + openQuery);
+//		System.out.println("token:" + token);
+//		System.out.println("userId:" + userId);
+
+		return userId;
+
+	}
+	private String getClassNameFromWsSession(Session session){
+		String openQuery = session.getQueryString();
+		//t=" + global.loginSessionToken + "&c=" +global.loginClassName
+		int  k = openQuery.indexOf("&");
+		String className = openQuery.substring(k+3);
+		return className;
+
+	}
+
 	public void newStudentCome(Session session) {
 
-		String openQuery = session.getQueryString();  //key=classname1
-		String className = openQuery.substring(openQuery.indexOf("=")+1);
-		String userIdToken = "userIdToken";
-		String connetionID = session.getId();
 
-		HashSet thisClassroom = (HashSet)allClassRoomsConnecions.get(className);
-		if(thisClassroom == null) {
-			allClassRoomsConnecions.put(className, new HashSet());
-			thisClassroom = (HashSet)allClassRoomsConnecions.get(className);
+		String userId = this.getUseridFromWsSession(session);
+
+		if(userId !=null ) //有效loginSessionToken
+		{
+			String className= this.getClassNameFromWsSession(session);
+			HashSet thisClassroom = (HashSet) allClassRoomsConnecions.get(className);
+			if (thisClassroom == null) {
+				allClassRoomsConnecions.put(className, new HashSet());
+				thisClassroom = (HashSet) allClassRoomsConnecions.get(className);
+			}
+			thisClassroom.add(new UserSession(userId, session));
+
+			System.out.println("new student for this classroom:"+ userId +"-->"+ className + " size:" + thisClassroom.size() + " new student wssession:" + session.toString());
+
 		}
-		thisClassroom.add(new UserSession(userIdToken,session));  
-		
-		System.out.println("new student for this classroom:" + className  +" size:" + thisClassroom.size()+  " new student wssession:" + session.toString());
-
-		
 	}
 	
 	public void oldStudentQuit(Session session) {
 
-		System.out.println("onclose sessioin... ..");
-		
-		Iterator it = allClassRoomsConnecions.values().iterator();  
-        while (it.hasNext()) {  	 
-        	  
-        	   HashSet oneClassRoomSessions = (HashSet) it.next();
-        	   
-       		Iterator them = oneClassRoomSessions.iterator();  
-            while (them.hasNext()) {  
-            	 UserSession temp =(UserSession) them.next();
-            	 if(temp.session == session)  {
-            		 oneClassRoomSessions.remove(temp);  //找打这个session,删除它. 
-            		 System.out.println("this session found and ....removed");
+		//check ws session
+		String userId = this.getUseridFromWsSession(session);
+		if(userId !=null ) //有效loginSessionToken
+		{
+			String className= this.getClassNameFromWsSession(session);
+			HashSet thisClassroom = (HashSet) allClassRoomsConnecions.get(className);
 
-            	 }
-            }
-        	
-        	
-        }
+			Iterator it = thisClassroom.iterator();
+			while (it.hasNext()) {
+					UserSession temp = (UserSession) it.next();
+					if (temp.session == session) {
+						it.remove();  //找打这个session,删除它.
+						System.out.println("student quit onclose sessioin:" + userId + " it's wssession removed from classroom:" + className);
+					}
+				}
+
+		}
 		
 	}
 	
 
 	public void oneStudentDraw( String message,Session session) {
-		
-		try {
 
-			if(message.indexOf("ping")!=-1)
-			{
-				   return;
+
+		//check ws session
+		String userId = this.getUseridFromWsSession(session);
+		if(userId !=null) {  //有效loginSessionToken
+
+			try {
+					if (message.indexOf("ping") != -1) {
+						return;
+					}
+
+					String className= this.getClassNameFromWsSession(session);
+
+					JSONObject messagejsonObject = JSONObject.parseObject(message);
+
+
+					//System.out.println("----------------本地client push开始....");
+				    //只有上课模式,才需要push 消息给其他同班同学的.  如何从className 上判定是上课模式呢?
+				    // 初始化ws 的只有上课模式, 和备课模式..  除去了备课classname, 就一定是上课的,就转发了.
+					if(className !=getTeacherBeikeFakeClassname(userId)) {
+						pushMessageToClassmates(className, message, session);
+						//System.out.println("----------------通知其他LB 开始.....");
+						pushToOtherLBServer(message);
+					}
+					//System.out.println("----------------保存redis开始.....");
+
+					save2Redis(className,messagejsonObject);
+
+
+			} catch (Exception ee) {
+				ee.printStackTrace();
 			}
 
-			JSONObject messagejsonObject = JSONObject.parseObject(message);
-
-    	    
-			//System.out.println("----------------本地client push开始....");
-
-			pushMessageToClassmates(messagejsonObject,message,session);
-
-			//System.out.println("----------------通知其他LB 开始.....");
-
-			pushToOtherLBServer(message);
-
-			//System.out.println("----------------保存redis开始.....");
-
-			save2Redis(messagejsonObject,message);
-			
-		
-		}catch (Exception ee) {ee.printStackTrace();}
-		
-		
+		}
 	}
 	private void cloneBanshuViewToRoom(String banshuClassName, String viewId, String roomClassName){
 
 
 	}
 	
-	private void save2Redis(JSONObject messagejsonObject, String message) {
+	private void save2Redis(String className,JSONObject messagejsonObject) {
 		
 
-		String className = messagejsonObject.getString("eclassname"); // when user login and choose one classroom from his schedule just bought. 
-		String xmethod = messagejsonObject.getString("xmethod"); // when user login and choose one classroom from his schedule just bought. 
+		String xmethod = messagejsonObject.getString("xmethod"); // when user login and choose one classroom from his schedule just bought.
 
 		if(xmethod.equals("updateShape")) {
 			String viewId = messagejsonObject.getString("viewId");
@@ -190,12 +220,12 @@ public class RoomBiz {
 		        while (it.hasNext()) {  	            
 		            UserSession temp = (UserSession)it.next();
 		            try {
-			          //	temp.session.getBasicRemote().sendText(message);  //one shape
-			          	temp.session.getAsyncRemote().sendText(message);  //one shape
+			          	temp.session.getBasicRemote().sendText(message);  //one shape
+//			          	temp.session.getAsyncRemote().sendText(message);  //老报这个错The remote endpoint was in state [TEXT_FULL_WRITING] which is an invalid state for called method
 
 		            }catch (Exception ee) {
-		                    System.out.println("fromlbpushToEachLocalClients" + "send error to client" +  temp.userID +"  " +ee.getMessage());
-		                    removeThisSessionFromServer(className, temp);
+		                    System.out.println("fromlbpushToEachLocalClients" + "send error to client, 该咋办呢? 不能武断去除这个client, 这个client可能还活着" +  temp.userId +"  " +ee.getMessage());
+//		                    it.remove();  //临时去除, 不转发给这个client了, 但这个client 如何还活着咋办呢?
 		         		   }
 		        }
 			}//else  	 System.out.println("fromlbpushToEachLocalClients: 没有目标教室的学生需要推送" + df.format(new Date()));
@@ -217,11 +247,10 @@ public class RoomBiz {
 		
 	}
 	
-	private void pushMessageToClassmates( JSONObject messagejsonObject, String message ,Session session) {
+	private synchronized void pushMessageToClassmates( String className, String message ,Session session) {
 		//push message to all other clients in this classroom
 
 		try {
-			String className = messagejsonObject.getString("eclassname");
 			HashSet thisClassroom = (HashSet)allClassRoomsConnecions.get(className);
       		//System.out.println(thisClassroom.size() + " " + df.format(new Date()));
             if(thisClassroom ==null) return; //没有其他client, 应该在第一个人进入的时候, 就要初始化.. todo, 后面改.
@@ -230,11 +259,11 @@ public class RoomBiz {
 	            UserSession temp = (UserSession)it.next();
 	            try {
 		            if(temp.session != session) { //不能发给自己了.
-		          		temp.session.getAsyncRemote().sendText(message);  //one shape
+		          		temp.session.getBasicRemote().sendText(message);  //one shape
 		            }
 	            }catch (Exception ee) {
-	                    System.out.println("send error to client" +  temp.userID +"  " +ee.getMessage());
-	                    removeThisSessionFromServer(className, temp);
+	                    System.out.println("send error to client, 该咋办? 不能去除这个client吧" +  temp.userId +"  " +ee.getMessage());
+//	                    it.remove(); //发给一个同学,但对方接收出错, 这是不能把同学的连接去除啊, 去除后这个同学再也接收不要消息了. 只能重新登录系统了.
 	         		   }
 	        }
 	            
@@ -293,8 +322,8 @@ public class RoomBiz {
 		return "redisKey_" + teacheruserid + "-" + "banshuku" ;
 	}
 
-	private String make_redisKey_4OneTeacherRoomboardsku(String pk) {
-		return "redisKey_" + pk;
+	private String make_redisKey_4OneTeacherRoomboardsku(String userId) {
+		return "redisKey_"  + userId + "roomboardsku";
 
 	}
 	private String redisKey_4OneTeacherKejianKu_public(){
@@ -438,7 +467,7 @@ public class RoomBiz {
     
     
     
-	public String loadeclasswhiteboardobjects(String className) {
+	public String loadeclasswhiteboardobjects(String className,JSONObject back) {
 		// 从redis 里读取所有json字符串数据， 转成json对象， 然后联合成整体json 字符串返回。
 		
 		String redisKey_4OneClassViewIdList = redisKey_4OneClassViewIdsList(className);
@@ -461,7 +490,7 @@ public class RoomBiz {
 		
 		
 		
-		JSONObject back = new JSONObject();
+		JSONObject backbody = new JSONObject();
 		//对应客户端的loadwhitedata
 //		let action = {
 //                type: ActionTypes.INIT_FROM_SERVER,
@@ -480,25 +509,20 @@ public class RoomBiz {
 //			    views: state.views,
 //			    shapes: state.shapes,
 
-		
-		back.put("eclassroomcurrentviewid", currentviewid);   
 
-		back.put("views", this.getJsonList(viewidlist));   
-		back.put("shapes", this.getJsonList(shapeIdlist));
-		
-		back.put("locks", this.getJsonList(userlocklist));
+		backbody.put("eclassroomcurrentviewid", currentviewid);
 
+		backbody.put("views", this.getJsonList(viewidlist));
+		backbody.put("shapes", this.getJsonList(shapeIdlist));
+
+		backbody.put("locks", this.getJsonList(userlocklist));
+
+
+		back.put("data",backbody);
 
 		String temp = JSONObject.toJSONString(back);
 		//System.out.println("loadeclasswhiteboardobjects:"+className +"   " +  temp);
 		return temp;
-	}
-
-	public String loadebanshukuobjects(String teacheruserid){
-
-    	String classroom = teacheruserid + "_" + "beikefakeclassname";
-    	return this.loadeclasswhiteboardobjects(classroom);
-
 	}
 
 
@@ -598,9 +622,18 @@ public class RoomBiz {
 	};
 	*/
 
-	public String loadteacherkejianku(String teacheruserid )
-	{
+
+	public String loadebanshukuobjects(String className,JSONObject back){
+
+		return this.loadeclasswhiteboardobjects(className,back);
+
+	}
+
+
+	public String loadteacherkejianku(JSONObject back) {
 		// 从redis 里读取所有json字符串数据， 转成json对象， 然后联合成整体json 字符串返回。
+
+		String teacheruserid = (String)back.get("userId");
 
 		String redisKey_4OneTeacherKejianKu = make_redisKey_4OneTeacherKejianKu(teacheruserid);
 
@@ -615,14 +648,19 @@ public class RoomBiz {
 
 		}
 
-		System.out.println("kejiankuJsonString:" + kejiankuJsonString);
 
-		return kejiankuJsonString;
 
+		back.put("data",JSONObject.parseObject(kejiankuJsonString));
+
+		String temp =JSONObject.toJSONString(back);
+
+		System.out.println("loadteacherkejianku:" + temp);
+		return 	temp;
 	}
 
-	public String loadteacherbansuku(String teacheruserid )
+	public String loadteacherbansuku(JSONObject back)
 	{
+		String teacheruserid = (String)back.get("userId");
 		// 从redis 里读取所有json字符串数据， 转成json对象， 然后联合成整体json 字符串返回。
 
 		String redisKey_4OneTeacherBanshuKu = make_redisKey_4OneTeacherBanshuKu(teacheruserid);
@@ -638,55 +676,165 @@ public class RoomBiz {
 
 		}
 
-		System.out.println("banshukuJsonString:" + banshukuJsonString);
 
-		return banshukuJsonString;
+		back.put("data",JSONObject.parseObject(banshukuJsonString));
+
+		String temp =JSONObject.toJSONString(back);
+
+		System.out.println("loadteacherbansuku:" + temp);
+		return 	temp;
 
 	}
 
-	public String loadteacherroomboardsku(String teacherUesrId_loginClassname){
+	public String loadteacherroomboardsku(JSONObject back){
 		// 从redis 里读取所有json字符串数据， 转成json对象， 然后联合成整体json 字符串返回。
+		String teacheruserid = (String)back.get("userId");
 
-		String temp =  (String)redisService.get(this.make_redisKey_4OneTeacherRoomboardsku(teacherUesrId_loginClassname));
-		System.out.println("loadteacherroomboardsku:"   + teacherUesrId_loginClassname);
-		System.out.println("loadteacherroomboardsku:"   + temp);
+		String roomboardsku =  (String)redisService.get(this.make_redisKey_4OneTeacherRoomboardsku(teacheruserid));
+
+		back.put("data",JSONObject.parseObject(roomboardsku));
+
+		String temp =JSONObject.toJSONString(back);
+
+		System.out.println("loadteacherroomboardsku:" + temp);
 
 		return temp;
 
 
 	}
 
-	public void saveteacherkejianku(String teacheruserid, String kejiankujsonstring){
+	public String saveteacherkejianku(JSONObject back, String kejiankujsonstring){
+
+		String teacheruserid = (String)back.get("userId");
 
 		String redisKey_4OneTeacherKejianKu = make_redisKey_4OneTeacherKejianKu(teacheruserid);
 		redisService.set(redisKey_4OneTeacherKejianKu,kejiankujsonstring);
 
+		back.put("data","ok");
+		String temp =JSONObject.toJSONString(back);
+		return temp;
 	}
 
-	public void saveteacherbanshuku(String teacheruserid, String banshukujsonstring){
+	public String saveteacherbanshuku(JSONObject back, String banshukujsonstring){
 
+		String teacheruserid = (String)back.get("userId");
 		String redisKey_4OneTeacherBanshuKu = make_redisKey_4OneTeacherBanshuKu(teacheruserid);
 		redisService.set(redisKey_4OneTeacherBanshuKu,banshukujsonstring);
-
+		back.put("data","ok");
+		String temp =JSONObject.toJSONString(back);
+		return temp;
 	}
-	public void saveteacherroomboardsku(String teacherUesrId_loginClassname, String roomboardskujsonstring){
+	public String saveteacherroomboardsku(JSONObject back, String roomboardskujsonstring){
 
-
-		String redisKey= make_redisKey_4OneTeacherRoomboardsku(teacherUesrId_loginClassname);
-
+		String teacheruserid = (String)back.get("userId");
+		String redisKey= make_redisKey_4OneTeacherRoomboardsku(teacheruserid);
 		redisService.set(redisKey,roomboardskujsonstring);
+		back.put("data","ok");
+		String temp =JSONObject.toJSONString(back);
+		return temp;
+	}
+
+
+	public String login(String userId, String password){
+
+		String myRet = "";
+
+		//check user*password
+		boolean bCheckOK = false;
+
+		if(userId.equals("15372082863c") && password.equals("123"))
+			bCheckOK=  true;
+		else if(userId.equals("13958003839c") && password.equals("123"))
+			bCheckOK=  true;
+		else
+			bCheckOK=  false;
+
+		//get this user's role
+		String role = "T"; //"S" means student, T  means Teacher
+		if(userId.equals("15372082863c") )
+			role = "T";
+		else if(userId.equals("13958003839c"))
+			role = "S";
+
+		//make the token
+
+		if(bCheckOK) {
+			String newloginSessioinToken = role + userId + "tempsessiontoken" + new Date().getTime();
+			redisService.set(newloginSessioinToken,userId);  //lgoinSessionToken 作为Key 直接放到redis里, value = UesrId, 查找效率高. 失效时间后面定.
+			myRet = newloginSessioinToken;
+		}
+
+		return myRet;  //frontEnd check this token, if "", means login failed, if start with T , means Teacher, S means sutdnet
 
 	}
+
+	private String getTeacherBeikeFakeClassname(String userId) {
+		return userId + "_beikefakeclassroom";
+	}
+	String joinclassroom(JSONObject back,String targetClassroom,int action){
+
+		//get userId
+		String userId = back.getString("UserId");
+
+		//check userId  and it's role and lessonTable and this action to see OK or not,  if OK , back this classroom
+		//role, 1: teacher, 0:sutdent
+		//action:  1: shangke, 2: beike (only used for teacher) 3:huigu (for teacher and student)
+		// use targetClassroom to get this classroom's id, front show the lessontable can only display classroom NOT ID
+
+		boolean bOK = true;
+		if(bOK) {
+			String classroomId = targetClassroom;
+
+			if(action==2)  //备课板书啊, load 板书所在的beikefakeclassroom, 一个老师所有的备课板书都存储在这个特殊的classroom下
+			{
+				back.put("eclassroom", getTeacherBeikeFakeClassname(userId));
+				//这时候,老师的课程表的点击的这堂课的备课动作,  那能为这堂课关联什么呢?
+
+				//todo ...
+
+
+			}else if (action==1)  //正常上课
+				back.put("eclassroom", classroomId);
+			else if (action==3)  //回顾课程
+				back.put("eclassroom", classroomId);
+
+
+			back.put("workmodel", action);  //todo
+
+
+		}
+
+		return JSONObject.toJSONString(back);
+
+
+	}
+
+	String loadlessontable(JSONObject back){
+
+		//get userId
+		String UserId = back.getString("UserId");
+
+		//get lessonTable by this UserId
+		String lessonTable = "fakedata";  //todo
+
+		back.put("data", lessonTable);
+
+
+		return JSONObject.toJSONString(back);
+
+
+	}
+
 
 
 }
 
 class UserSession{
 	
-	String userID;
+	String userId;
 	Session  session;
 	public UserSession(String userID, Session session) {
-		this.userID = userID;
+		this.userId = userID;
 		this.session = session;
 	}
 	
