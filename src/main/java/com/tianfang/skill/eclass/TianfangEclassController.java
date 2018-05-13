@@ -68,12 +68,12 @@ public class TianfangEclassController {
 	}
 
 	@RequestMapping("/loadteacherroomboardsku")
-	public String loadteacherroomboardsku(String t) {
+	public String loadteacherroomboardsku(String t,String classname) {
 		JSONObject back  = checkSession(t);
 		if(!back.getBoolean("session"))  // session bad
 			return JSONObject.toJSONString(back);
 		else
-			return samAutowiredRoomBiz.loadteacherroomboardsku(back);
+			return samAutowiredRoomBiz.loadteacherroomboardsku(back,classname);
 
 
 	}
@@ -106,14 +106,14 @@ public class TianfangEclassController {
 	}
 	@RequestMapping(value= "/saveteacherroomboardsku", method=RequestMethod.POST)
 	@ResponseBody
-	public String saveteacherroomboardsku(String t, @RequestBody JSONObject roomboardsku)
+	public String saveteacherroomboardsku(String t, String classname, @RequestBody JSONObject roomboardsku)
 	{
 
 		JSONObject back  = checkSession(t);
 		if(!back.getBoolean("session"))  // session bad
 			return JSONObject.toJSONString(back);
 		else
-			return samAutowiredRoomBiz.saveteacherroomboardsku(back, roomboardsku.toJSONString());
+			return samAutowiredRoomBiz.saveteacherroomboardsku(back, classname,roomboardsku.toJSONString());
 
 	}
 

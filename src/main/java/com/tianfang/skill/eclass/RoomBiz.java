@@ -322,8 +322,8 @@ public class RoomBiz {
 		return "redisKey_" + teacheruserid + "-" + "banshuku" ;
 	}
 
-	private String make_redisKey_4OneTeacherRoomboardsku(String userId) {
-		return "redisKey_"  + userId + "roomboardsku";
+	private String make_redisKey_4OneTeacherRoomboardsku(String userId,String classname) {
+		return "redisKey_"  + userId +"_" + classname +"_roomboardsku";
 
 	}
 	private String redisKey_4OneTeacherKejianKu_public(){
@@ -686,11 +686,11 @@ public class RoomBiz {
 
 	}
 
-	public String loadteacherroomboardsku(JSONObject back){
+	public String loadteacherroomboardsku(JSONObject back,String classname){
 		// 从redis 里读取所有json字符串数据， 转成json对象， 然后联合成整体json 字符串返回。
 		String teacheruserid = (String)back.get("userId");
 
-		String roomboardsku =  (String)redisService.get(this.make_redisKey_4OneTeacherRoomboardsku(teacheruserid));
+		String roomboardsku =  (String)redisService.get(this.make_redisKey_4OneTeacherRoomboardsku(teacheruserid,classname));
 
 		back.put("data",JSONObject.parseObject(roomboardsku));
 
@@ -724,10 +724,10 @@ public class RoomBiz {
 		String temp =JSONObject.toJSONString(back);
 		return temp;
 	}
-	public String saveteacherroomboardsku(JSONObject back, String roomboardskujsonstring){
+	public String saveteacherroomboardsku(JSONObject back, String classname,String roomboardskujsonstring){
 
 		String teacheruserid = (String)back.get("userId");
-		String redisKey= make_redisKey_4OneTeacherRoomboardsku(teacheruserid);
+		String redisKey= make_redisKey_4OneTeacherRoomboardsku(teacheruserid,classname);
 		redisService.set(redisKey,roomboardskujsonstring);
 		back.put("data","ok");
 		String temp =JSONObject.toJSONString(back);
