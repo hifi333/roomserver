@@ -12,9 +12,9 @@ public class TianfangEclassApplication {
 	public static void main(String[] args) {
 		ConfigurableApplicationContext  aa = SpringApplication.run(TianfangEclassApplication.class, args);
 			
-	      SamWebSocket1.setAppContext(aa);	
+	      SamWSServer.setAppContext(aa);
 
-	      WsConnectionLBServer  wsLbServer= (WsConnectionLBServer) aa.getBean(WsConnectionLBServer.class);
+	      LBServer wsLbServer= (LBServer) aa.getBean(LBServer.class);
 	      wsLbServer.startServer();
 	        
 	}

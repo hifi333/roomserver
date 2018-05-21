@@ -1,14 +1,11 @@
 package com.tianfang.skill.eclass;
 
+import java.io.IOException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.concurrent.ArrayBlockingQueue;
 
+import javax.sound.midi.SysexMessage;
 import javax.websocket.Session;
 
 import org.apache.commons.collections.CollectionUtils;
@@ -24,7 +21,7 @@ public class RoomBiz {
     private SamRedisService redisService;
 	
 	@Autowired
-    private WsConnect2OtherLBServer lbwsclient;
+    private LBServerMakeConnect2OtherLBServer LB2LBConntionKeeper;
 	
 
 	
@@ -67,14 +64,27 @@ public class RoomBiz {
 		if(userId !=null ) //有效loginSessionToken
 		{
 			String className= this.getClassNameFromWsSession(session);
-			HashSet thisClassroom = (HashSet) allClassRoomsConnecions.get(className);
-			if (thisClassroom == null) {
-				allClassRoomsConnecions.put(className, new HashSet());
-				thisClassroom = (HashSet) allClassRoomsConnecions.get(className);
+			Hashtable thisClassroomWsSessions = (Hashtable) allClassRoomsConnecions.get(className);
+			if (thisClassroomWsSessions == null) {
+				allClassRoomsConnecions.put(className, new Hashtable());
+				thisClassroomWsSessions = (Hashtable) allClassRoomsConnecions.get(className);
 			}
-			thisClassroom.add(new UserSession(userId, session));
+			//覆盖session, 但要关闭旧的session
+			UserSession oldSession = (UserSession)thisClassroomWsSessions.get(userId);
+			if(oldSession!=null){
 
-			System.out.println("new student for this classroom:"+ userId +"-->"+ className + " size:" + thisClassroom.size() + " new student wssession:" + session.toString());
+				try {
+					oldSession.session.close();
+				} catch (IOException e) {
+
+					System.out.println("覆盖session, 但要关闭旧的session:" + userId);
+
+				}
+			}
+
+			thisClassroomWsSessions.put(userId,new UserSession(userId, session));
+
+			System.out.println("new student for this classroom:"+ userId +"-->"+ className + " size:" + thisClassroomWsSessions.size() + " new student wssession:" + session.toString());
 
 		}
 	}
@@ -86,16 +96,19 @@ public class RoomBiz {
 		if(userId !=null ) //有效loginSessionToken
 		{
 			String className= this.getClassNameFromWsSession(session);
-			HashSet thisClassroom = (HashSet) allClassRoomsConnecions.get(className);
+			Hashtable thisClassroomSessions = (Hashtable) allClassRoomsConnecions.get(className);
+			thisClassroomSessions.remove(userId);
+			System.out.println("student quit onclose sessioin:" + userId + " it's wssession removed from classroom:" + className);
 
-			Iterator it = thisClassroom.iterator();
-			while (it.hasNext()) {
-					UserSession temp = (UserSession) it.next();
-					if (temp.session == session) {
-						it.remove();  //找打这个session,删除它.
-						System.out.println("student quit onclose sessioin:" + userId + " it's wssession removed from classroom:" + className);
-					}
-				}
+
+//			Iterator it = thisClassroom.values().iterator();
+//			while (it.hasNext()) {
+//					UserSession temp = (UserSession) it.next();
+//					if (temp.session == session) {
+//						it.remove();  //找打这个session,删除它.
+//						System.out.println("student quit onclose sessioin:" + userId + " it's wssession removed from classroom:" + className);
+//					}
+//				}
 
 		}
 		
@@ -210,23 +223,19 @@ public class RoomBiz {
 			JSONObject jsonObject = JSONObject.parseObject(message);
 			String className = jsonObject.getString("eclassname"); // when user login and choose one classroom from his schedule just bought. 
 
-			HashSet thisClassroom = (HashSet)allClassRoomsConnecions.get(className);
+			Hashtable thisClassroomSessions = (Hashtable)allClassRoomsConnecions.get(className);
 			
-			if(thisClassroom!=null && thisClassroom.size()!=0) //这个LB 已经有这个classroom 的学生了.
+			if(thisClassroomSessions!=null && thisClassroomSessions.size()!=0) //这个LB 已经有这个classroom 的学生了.
 			{
 	      		//System.out.println("fromlbpushToEachLocalClients: " + thisClassroom.size() + " " + df.format(new Date()));
 	
-				Iterator it = thisClassroom.iterator();  
+				Iterator it = thisClassroomSessions.values().iterator();
 		        while (it.hasNext()) {  	            
 		            UserSession temp = (UserSession)it.next();
-		            try {
-			          	temp.session.getBasicRemote().sendText(message);  //one shape
+//			          	temp.session.getBasicRemote().sendText(message);  //one shape
 //			          	temp.session.getAsyncRemote().sendText(message);  //老报这个错The remote endpoint was in state [TEXT_FULL_WRITING] which is an invalid state for called method
+						temp.addMoreMessage_produce(message);
 
-		            }catch (Exception ee) {
-		                    System.out.println("fromlbpushToEachLocalClients" + "send error to client, 该咋办呢? 不能武断去除这个client, 这个client可能还活着" +  temp.userId +"  " +ee.getMessage());
-//		                    it.remove();  //临时去除, 不转发给这个client了, 但这个client 如何还活着咋办呢?
-		         		   }
 		        }
 			}//else  	 System.out.println("fromlbpushToEachLocalClients: 没有目标教室的学生需要推送" + df.format(new Date()));
 
@@ -242,29 +251,32 @@ public class RoomBiz {
 		//make WS connecion to LBServer List
 		//keep the list of LBWSConnecions
 		//push jsondata to each LBServer here.
-		
-		lbwsclient.pushToOtherLBServer(message);
+
+		LB2LBConntionKeeper.pushToOtherLBServer(message);
 		
 	}
 	
-	private synchronized void pushMessageToClassmates( String className, String message ,Session session) {
+	private void pushMessageToClassmates( String className, String message ,Session session) {
 		//push message to all other clients in this classroom
 
 		try {
-			HashSet thisClassroom = (HashSet)allClassRoomsConnecions.get(className);
+			Hashtable thisClassroomSessions = (Hashtable)allClassRoomsConnecions.get(className);
       		//System.out.println(thisClassroom.size() + " " + df.format(new Date()));
-            if(thisClassroom ==null) return; //没有其他client, 应该在第一个人进入的时候, 就要初始化.. todo, 后面改.
-			Iterator it = thisClassroom.iterator();  
+            if(thisClassroomSessions ==null){ System.out.println("pushMessageToClassmates: find thisClassroomSessions ==null");return;} //没有其他client, 应该在第一个人进入的时候, 就要初始化.. todo, 后面改.
+			Iterator it = thisClassroomSessions.values().iterator();
 	        while (it.hasNext()) {  	            
 	            UserSession temp = (UserSession)it.next();
-	            try {
+//	            try {
 		            if(temp.session != session) { //不能发给自己了.
-		          		temp.session.getBasicRemote().sendText(message);  //one shape
+//		          		temp.session.getBasicRemote().sendText(message);  //one shape
+						temp.addMoreMessage_produce(message);
+
+
 		            }
-	            }catch (Exception ee) {
-	                    System.out.println("send error to client, 该咋办? 不能去除这个client吧" +  temp.userId +"  " +ee.getMessage());
-//	                    it.remove(); //发给一个同学,但对方接收出错, 这是不能把同学的连接去除啊, 去除后这个同学再也接收不要消息了. 只能重新登录系统了.
-	         		   }
+//	            }catch (Exception ee) {
+//	                    System.out.println("send error to client, 该咋办? 不能去除这个client吧" +  temp.userId +"  " +ee.getMessage());
+////	                    it.remove(); //发给一个同学,但对方接收出错, 这是不能把同学的连接去除啊, 去除后这个同学再也接收不要消息了. 只能重新登录系统了.
+//	         		   }
 	        }
 	            
         }  
@@ -273,8 +285,8 @@ public class RoomBiz {
 	}
 	
 	private void removeThisSessionFromServer(String className, UserSession  aSession) {
-		HashSet thisClassroom = (HashSet)allClassRoomsConnecions.get(className);
-		thisClassroom.remove(aSession);
+		Hashtable thisClassroomSessions = (Hashtable)allClassRoomsConnecions.get(className);
+		thisClassroomSessions.remove(aSession.userId);
 		
 	}
 	
@@ -740,21 +752,25 @@ public class RoomBiz {
 		String myRet = "";
 
 		//check user*password
-		boolean bCheckOK = false;
-
-		if(userId.equals("15372082863c") && password.equals("123"))
-			bCheckOK=  true;
-		else if(userId.equals("13958003839c") && password.equals("123"))
-			bCheckOK=  true;
-		else
-			bCheckOK=  false;
+		boolean bCheckOK = true;
+//
+//		if(userId.equals("15372082863c") && password.equals("123"))
+//			bCheckOK=  true;
+//		else if(userId.equals("13958003839c") && password.equals("123"))
+//			bCheckOK=  true;
+//		else
+//			bCheckOK=  false;
 
 		//get this user's role
 		String role = "T"; //"S" means student, T  means Teacher
-		if(userId.equals("15372082863c") )
-			role = "T";
-		else if(userId.equals("13958003839c"))
-			role = "S";
+//		if(userId.equals("15372082863c") )
+//			role = "T";
+//		else if(userId.equals("13958003839c"))
+//			role = "S";
+
+		if(userId.startsWith("s"))
+			role ="S";
+
 
 		//make the token
 
@@ -831,13 +847,150 @@ public class RoomBiz {
 
 class UserSession{
 	
-	String userId;
+	String 	 userId;
 	Session  session;
+	private Thread sendTothisWsSessionThread;
+	private ArrayBlockingQueue dataBulk = new ArrayBlockingQueue(1000*10);
+	//消息栈, 外面不断push进来, 内部线程不断发送出去
+	long  badtrytimes_add=0;
+	long  firstBadtrytimelong_add =0;
+	long  lastBadtrytimeLong_add=0;
+
+
+
+	long  badtrytimes_takesend=0;
+	long  firstBadtrytimelong_takesend =0;
+	long  lastBadtrytimeLong_takesend=0;
+
+
+	public boolean getHealth_addBulk(){
+
+
+		if(badtrytimes_add ==0) return true;
+		else  if(lastBadtrytimeLong_add - firstBadtrytimelong_add > 1000*60)  //已经尝试了60秒了.
+			return false;
+		else
+			return true;
+
+		//badtrytimes 已经丢了的信息条数.
+
+	}
+
+
+	public boolean getHealth_takesend(){
+
+
+		if(badtrytimes_takesend ==0) return true;
+		else  if(lastBadtrytimeLong_takesend - firstBadtrytimelong_takesend > 1000*60)  //已经尝试了60秒了.
+			return false;
+		else
+			return true;
+
+		//badtrytimes 已经丢了的信息条数.
+
+	}
+
+	public void addMoreMessage_produce(String newMsg){
+
+//		if(userId.equals("sxiaomi")) {
+//				System.out.println( Thread.currentThread().getName() + "  UserSession: " + userId + " dataBulk size:" + dataBulk.size());
+////			if (dataBulk.size() == 9)
+//				System.out.println("UserSession:" + userId + "dataBulk 满了......快了");
+//		}
+		try {
+			dataBulk.add(newMsg);
+			badtrytimes_add=0;
+		} catch (Exception e) {
+			if(badtrytimes_add==0) firstBadtrytimelong_add = new Date().getTime();
+			lastBadtrytimeLong_add = new Date().getTime();
+			badtrytimes_add++;
+
+			System.out.println(Thread.currentThread().getName() + " ===  "+e.getMessage() + "dataBulk.add(newMsg) Queue full, new message droped for this wssession.. " +
+					"and need remove this wssession for it is bad, + 已经丢了消息数:" + badtrytimes_add
+					+ " 持续时间:(s)" + (lastBadtrytimeLong_add - firstBadtrytimelong_add)/1000);
+		}
+	}
+
+//	synchronized  public ArrayList cutAllMessageto_consume(){
+//
+//		if(this.dataBulk.size()>0) {
+//			ArrayList temp = this.dataBulk;
+//
+//			this.dataBulk = new ArrayList();
+//
+//			return temp;
+//		}
+//
+//		return null;
+//	}
+
+
+
 	public UserSession(String userID, Session session) {
 		this.userId = userID;
 		this.session = session;
+
+
+		sendTothisWsSessionThread = new Thread() {
+			public void run() {
+
+				while (true) {
+
+
+					try {
+						String oneNewMsg = (String) dataBulk.take();
+						session.getBasicRemote().sendText(oneNewMsg);
+						badtrytimes_takesend =0;
+//
+//						if(userID.equals("sxiaomi"))
+//							Thread.sleep(1000*20);
+
+					}  catch (Exception e) {
+
+						if(badtrytimes_takesend==0) firstBadtrytimelong_takesend = new Date().getTime();
+						lastBadtrytimeLong_takesend = new Date().getTime();
+						badtrytimes_takesend++;
+
+						System.out.println(Thread.currentThread().getName() + "send error to client, 该咋办? 不能去除这个client吧" + userId + "  "
+								+ e.getMessage() + "已经丢了消息数:" + badtrytimes_takesend
+								+ " 持续时间:(s)" + (lastBadtrytimeLong_takesend - firstBadtrytimelong_takesend)/1000);
+					}
+
+
+					//Cut the dataBulk current data to this thread to send out
+//
+//					ArrayList toSendout = cutAllMessageto_consume();
+//
+//					if (toSendout != null) {
+////						System.out.println("cutAllMessageto_consume:" + toSendout.size());
+//
+//						for (int i = 0; i < toSendout.size(); i++) {
+//
+//							String message = (String) toSendout.get(i);
+//
+//							try {
+//								session.getBasicRemote().sendText(message);
+//
+//							} catch (Exception ee) {
+//								System.out.println("send error to client, 该咋办? 不能去除这个client吧" + userId + "  " + ee.getMessage());
+//							}
+//						}
+//					}
+//
+//					try {
+//						Thread.sleep(100);  //10秒扫一遍
+//					} catch (Exception ee) {
+//						ee.printStackTrace();
+//					}
+//
+//
+
+				}
+			}
+		};
+
+		sendTothisWsSessionThread.start();
 	}
-	
 	
 	
 }
