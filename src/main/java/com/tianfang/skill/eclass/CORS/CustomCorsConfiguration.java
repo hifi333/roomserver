@@ -3,6 +3,7 @@ package com.tianfang.skill.eclass.CORS;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
+import org.springframework.web.servlet.config.annotation.ViewControllerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
 
@@ -15,9 +16,16 @@ public class CustomCorsConfiguration {
          @Override
          public void addCorsMappings(CorsRegistry registry) {
 //             registry.addMapping("/**").allowedOrigins("http://localhost:8080");
-               registry.addMapping("/**").allowedOrigins("*"); 
-   
+             registry.addMapping("/**").allowedOrigins("*");
+
+
          }
+
+
+        @Override
+        public void addViewControllers(ViewControllerRegistry registry) {
+            super.addViewControllers(registry);
+        }
     };
   }
 }

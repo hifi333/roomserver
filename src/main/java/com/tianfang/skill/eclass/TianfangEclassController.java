@@ -127,9 +127,14 @@ public class TianfangEclassController {
 		String userid = (String)loginmeta.get("userid");
 		String password = (String) loginmeta.get("password");
 
-		String myRet = samAutowiredRoomBiz.login(userid,password);
+		System.out.println("login rerequest:" + userid ) ;
 
-		System.out.println("Login:" + userid + " status:" + myRet);
+
+		String myRet="";
+		if(userid!=null  && password!=null) {
+			 myRet = samAutowiredRoomBiz.login(userid, password);
+			System.out.println("Login:" + userid + " status:" + myRet);
+		}
 		return myRet;
 
 	}
@@ -192,12 +197,12 @@ public class TianfangEclassController {
 
 
 
-		@RequestMapping(value= "/test123", method=RequestMethod.POST)
+		@RequestMapping(value= "/test123", method=RequestMethod.GET)
 	@ResponseBody
 	public String test123(String timetableclassname, @RequestBody JSONObject shapesjson)
 	{
 		System.out.println(timetableclassname);
-		System.out.println(shapesjson.toJSONString());
+//		System.out.println(shapesjson.toJSONString());
 
 		
 //		InputStream is= null;     

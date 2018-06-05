@@ -8,7 +8,9 @@ import java.util.concurrent.ArrayBlockingQueue;
 import javax.sound.midi.SysexMessage;
 import javax.websocket.Session;
 
+import com.alibaba.fastjson.JSON;
 import org.apache.commons.collections.CollectionUtils;
+import org.hibernate.validator.internal.metadata.core.AnnotationProcessingOptionsImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -22,10 +24,13 @@ public class RoomBiz {
 	
 	@Autowired
     private LBServerMakeConnect2OtherLBServer LB2LBConntionKeeper;
-	
 
-	
-	
+	@Autowired
+	private IBatisMapper_users  iBatisMapper_users;
+
+	@Autowired
+	private IBatisMapper_v_classscheduletable  iBatisMapper_v_classscheduletable;
+
 	private static SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss SS");
 
 	
@@ -749,27 +754,31 @@ public class RoomBiz {
 
 	public String login(String userId, String password){
 
+
+		System.out.println("login check database");
+
+
 		String myRet = "";
-
 		//check user*password
-		boolean bCheckOK = true;
-//
-//		if(userId.equals("15372082863c") && password.equals("123"))
-//			bCheckOK=  true;
-//		else if(userId.equals("13958003839c") && password.equals("123"))
-//			bCheckOK=  true;
-//		else
-//			bCheckOK=  false;
+		boolean bCheckOK = false;
+		String role = "S"; //"S" means student, T  means Teacher
 
-		//get this user's role
-		String role = "T"; //"S" means student, T  means Teacher
-//		if(userId.equals("15372082863c") )
-//			role = "T";
-//		else if(userId.equals("13958003839c"))
-//			role = "S";
+		try {
 
-		if(userId.startsWith("s"))
-			role ="S";
+//			int role =1;
+//			if(userId.startsWith("139")) role=0;
+//			iBatisMapper_users.insert(userId, password, "sangu", role);
+			IBatisModel_users oneuser = iBatisMapper_users.findByName(userId);
+			if(oneuser.password.equals(password))
+                  bCheckOK = true;
+
+			if(oneuser.role ==1)
+				role ="T";
+			if(oneuser.role ==0)
+				role ="S";
+
+
+		}catch (Exception eee) {System.out.println(eee.getMessage());}
 
 
 		//make the token
@@ -787,10 +796,11 @@ public class RoomBiz {
 	private String getTeacherBeikeFakeClassname(String userId) {
 		return userId + "_beikefakeclassroom";
 	}
+
 	String joinclassroom(JSONObject back,String targetClassroom,int action){
 
 		//get userId
-		String userId = back.getString("UserId");
+		String userId = back.getString("userId");
 
 		//check userId  and it's role and lessonTable and this action to see OK or not,  if OK , back this classroom
 		//role, 1: teacher, 0:sutdent
@@ -801,7 +811,9 @@ public class RoomBiz {
 		if(bOK) {
 			String classroomId = targetClassroom;
 
-			if(action==2)  //备课板书啊, load 板书所在的beikefakeclassroom, 一个老师所有的备课板书都存储在这个特殊的classroom下
+			System.out.println("joinclass:" + classroomId + "  workmodel:" + action);
+
+			if(action ==2)  //备课板书啊, load 板书所在的beikefakeclassroom, 一个老师所有的备课板书都存储在这个特殊的classroom下
 			{
 				back.put("eclassroom", getTeacherBeikeFakeClassname(userId));
 				//这时候,老师的课程表的点击的这堂课的备课动作,  那能为这堂课关联什么呢?
@@ -809,10 +821,17 @@ public class RoomBiz {
 				//todo ...
 
 
-			}else if (action==1)  //正常上课
+			}else if (action ==1)  //正常上课
+			{
+				System.out.println("workmodel=1, seteclassroom:" + classroomId );
+
 				back.put("eclassroom", classroomId);
-			else if (action==3)  //回顾课程
+			}
+			else if (action ==3)  //回顾课程
+			{
 				back.put("eclassroom", classroomId);
+
+			}
 
 
 			back.put("workmodel", action);  //todo
@@ -828,14 +847,63 @@ public class RoomBiz {
 	String loadlessontable(JSONObject back){
 
 		//get userId
-		String UserId = back.getString("UserId");
+		String userId = back.getString("userId");
 
 		//get lessonTable by this UserId
-		String lessonTable = "fakedata";  //todo
 
-		back.put("data", lessonTable);
+//		if(back.session)  //正常session
+
+//		console.log(back.data);
+//
+//		let result={
+//
+//				'lessionlist':[
+//		{
+//			lessonid:"alessioid001a",
+//					date: "2018-5-8",
+//				name:"数学",
+//				time: "17:30 ~ 18:30",
+//				teacher: "高加盟",
+//				status: "open"
+//		},
+//		{
+//			lessonid:"alessioid002a",
+//					date: "2018-5-8",
+//				name:"数学",
+//				time: "17:30 ~ 18:30",
+//				teacher: "高加盟",
+//				status: "open"
+//		},
+//
+//
+//
+
+		ArrayList<JSONObject> lessionlist  = new ArrayList<JSONObject>();
+
+		List<IBatisModel_v_classscheduletable>  aa = iBatisMapper_v_classscheduletable.getLessonlistbyuserid(userId);
+
+		SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm");
+
+		for(int i=0;i< aa.size();i++) {
+			IBatisModel_v_classscheduletable bb = aa.get(i);
 
 
+			JSONObject jsonObject = new JSONObject();
+			jsonObject.put("lessionid",bb.lessionid);
+			jsonObject.put("lessionname",bb.lessionname);
+			jsonObject.put("begintime",formatter.format(bb.begintime));
+			jsonObject.put("endtime",formatter.format(bb.endtime));
+			jsonObject.put("teacheruserfullname",bb.teacheruserfullname);
+			jsonObject.put("summary",bb.summary);
+
+			lessionlist.add(jsonObject);
+
+			System.out.println(bb.lessionid + "," + bb.lessionname + "," + bb.begintime + " ~ " + bb.endtime + "  " + bb.teacheruserfullname + "  " + bb.summary);
+		}
+
+
+		System.out.println("load lession table:" + lessionlist.size());
+		back.put("data",lessionlist);
 		return JSONObject.toJSONString(back);
 
 

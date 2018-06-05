@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>andord</title>
+
+
+    <script>
+
+
+        console.log("i am andriod html, loaded ok ..... provide a menthod:setLoginSessionToken");
+
+
+        function setLoginSessionToken(userId,loginSessionToken,loginRole) {
+
+            window.loginUserId = userId;
+//            global.loginSessionToken = loginSessionToken;
+//            global.loginRole = loginRole;
+
+            console.log("set from activity:loginUserId=" + userId + "," + loginSessionToken);
+
+        }
+
+        function hi() {
+
+
+            console.log("hi called:" + window.loginUserId);
+        }
+
+    </script>
+</head>
+<body>
+<p>  hello  i am  android html</p>
+
+</body>
+</html>
