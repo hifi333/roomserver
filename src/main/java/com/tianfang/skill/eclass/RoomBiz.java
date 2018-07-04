@@ -185,6 +185,7 @@ public class RoomBiz {
 			String viewId = messagejsonObject.getString("viewId");
 			String payload = messagejsonObject.getString("payload");
 
+			System.out.println("eclassname just created new view:" +   className + "," + viewId );
 			saveUpdateView(className,viewId,payload);
 
 			//切换本堂课当前打开的view
@@ -640,8 +641,11 @@ public class RoomBiz {
 	*/
 
 
-	public String loadebanshukuobjects(String className,JSONObject back){
+	public String loadebanshukuobjects(JSONObject back){
 
+		String teacheruserid = (String)back.get("userId");
+
+		String className = this.getTeacherBeikeFakeClassname(teacheruserid);
 		return this.loadeclasswhiteboardobjects(className,back);
 
 	}
@@ -797,6 +801,37 @@ public class RoomBiz {
 		return userId + "_beikefakeclassroom";
 	}
 
+
+
+
+
+	String perteacherkejian_banshuweihu(JSONObject back){
+
+		//get userId
+		String userId = back.getString("userId");
+
+		//check userId  and it's role and lessonTable and this action to see OK or not,  if OK , back this classroom
+		//role, 1: teacher, 0:sutdent
+		//action:  1: shangke, 2: beike (only used for teacher) 3:huigu (for teacher and student)
+		// use targetClassroom to get this classroom's id, front show the lessontable can only display classroom NOT ID
+
+		boolean bOK = true;
+		if(bOK) {
+
+			back.put("eclassroom", getTeacherBeikeFakeClassname(userId));  //一个老师所有的备课板书都存储在这个特殊的classroom下
+			back.put("workmodel", 0);  //0 means 维护
+
+
+		}
+
+		System.out.println("------perteacherkejian_banshuweihu:" + JSONObject.toJSONString(back));
+		return JSONObject.toJSONString(back);
+
+
+	}
+
+
+
 	String joinclassroom(JSONObject back,String targetClassroom,int action){
 
 		//get userId
@@ -812,33 +847,19 @@ public class RoomBiz {
 			String classroomId = targetClassroom;
 
 			System.out.println("joinclass:" + classroomId + "  workmodel:" + action);
-
-			if(action ==2)  //备课板书啊, load 板书所在的beikefakeclassroom, 一个老师所有的备课板书都存储在这个特殊的classroom下
+			if(action ==1 || action==2 || action==3)  //1上课, 2备课， 3回顾
+				back.put("workmodel", action);
+			else
 			{
-				back.put("eclassroom", getTeacherBeikeFakeClassname(userId));
-				//这时候,老师的课程表的点击的这堂课的备课动作,  那能为这堂课关联什么呢?
-
-				//todo ...
-
-
-			}else if (action ==1)  //正常上课
-			{
-				System.out.println("workmodel=1, seteclassroom:" + classroomId );
-
-				back.put("eclassroom", classroomId);
-			}
-			else if (action ==3)  //回顾课程
-			{
-				back.put("eclassroom", classroomId);
-
+				System.out.println("unkown workmodel aciton:" + action);
 			}
 
-
-			back.put("workmodel", action);  //todo
+			back.put("eclassroom", classroomId);
 
 
 		}
 
+		System.out.println("------JoinClassRoom:" + JSONObject.toJSONString(back));
 		return JSONObject.toJSONString(back);
 
 
