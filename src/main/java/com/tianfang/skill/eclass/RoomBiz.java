@@ -818,7 +818,7 @@ public class RoomBiz {
 		boolean bOK = true;
 		if(bOK) {
 
-			back.put("eclassroom", getTeacherBeikeFakeClassname(userId));  //一个老师所有的备课板书都存储在这个特殊的classroom下
+			back.put("fakeroomid", getTeacherBeikeFakeClassname(userId));  //一个老师所有的备课板书都存储在这个特殊的classroom下
 			back.put("workmodel", 0);  //0 means 维护
 
 
@@ -846,7 +846,7 @@ public class RoomBiz {
 		if(bOK) {
 			String classroomId = targetClassroom;
 
-			System.out.println("joinclass:" + classroomId + "  workmodel:" + action);
+			System.out.println("joinclass:" + classroomId 	+ "  workmodel:" + action);
 			if(action ==1 || action==2 || action==3)  //1上课, 2备课， 3回顾
 				back.put("workmodel", action);
 			else
@@ -854,7 +854,7 @@ public class RoomBiz {
 				System.out.println("unkown workmodel aciton:" + action);
 			}
 
-			back.put("eclassroom", classroomId);
+			back.put("roomid", classroomId);
 
 
 		}

@@ -9712,7 +9712,7 @@ exports.default = {
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.default = tobeCalledfromLoginActivity;
+exports.default = loginActivity_callwebviewjs_showLessionCalendarView;
 
 var _react = __webpack_require__(32);
 
@@ -9728,16 +9728,16 @@ var _LessionCalendarView2 = _interopRequireDefault(_LessionCalendarView);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-function tobeCalledfromLoginActivity(loginSessionToken) {
+function loginActivity_callwebviewjs_showLessionCalendarView(loginSessionToken) {
+
+  console.log("js:loginActivity_callwebviewjs_showLessionCalendarView called...ok with token:" + loginSessionToken);
 
   _reactDom2.default.render(_react2.default.createElement(_LessionCalendarView2.default, { loginSessionToken: loginSessionToken }), document.getElementById('lessionh5'));
 }
 
-window.tobeCalledfromLoginActivity = tobeCalledfromLoginActivity;
+window.loginActivity_callwebviewjs_showLessionCalendarView = loginActivity_callwebviewjs_showLessionCalendarView;
 
-console.log("run here..");
-
-tobeCalledfromLoginActivity("S1390tempsessiontoken1528209776078");
+console.log("js:LessonH5-webview:loginActivity_callwebviewjs_showLessionCalendarView(): export ok");
 
 /***/ }),
 /* 85 */
@@ -22357,7 +22357,7 @@ var LessionCalendarView = _react2.default.createClass({
 
                     try {
                         var para = {
-                            eclassroom: back.eclassroom,
+                            eclassroom: back.roomid,
                             workmodel: back.workmodel
                         };
 
@@ -22368,7 +22368,7 @@ var LessionCalendarView = _react2.default.createClass({
                     }
                 } else {
 
-                    skillroom.joinRoom(back.eclassroom, back.workmodel);
+                    skillroom.joinRoom(back.roomid, back.workmodel);
                     console.log("skillroom.joinRoom: done");
                 }
             }
@@ -23587,11 +23587,13 @@ var SamHttpClient = function () {
 
             var serverip = this.getServerIP();
 
-            var meta = {};
+            var meta = {
+                token: loginSessionToken
+            };
 
             _jquery2.default.ajax({
                 type: 'POST',
-                url: 'http://122.152.210.96/loadlessontable?token=' + loginSessionToken,
+                url: 'http://122.152.210.96/loadlessontable',
                 contentType: "application/json",
                 data: JSON.stringify(meta), //还是POST String
                 success: callback,
@@ -23607,13 +23609,14 @@ var SamHttpClient = function () {
             var serverip = this.getServerIP();
 
             var meta = {
-                targetClassroom: targetClassroom,
-                action: action
+                token: loginSessionToken,
+                roomid: targetClassroom,
+                roomaction: action
             };
 
             _jquery2.default.ajax({
                 type: 'POST',
-                url: 'http://122.152.210.96/joinclassroom?token=' + loginSessionToken,
+                url: 'http://122.152.210.96/joinclassroom',
                 contentType: "application/json",
                 data: JSON.stringify(meta), //还是POST String
                 success: callback,

@@ -27,18 +27,18 @@ public class TianfangEclassController {
 //		return jedisPool.getResource();
 //	}
 
-	@RequestMapping(value="/loadeclasswhiteboardobjects", produces="application/json")
-	public String loadeclasswhiteboardobjects(String t,String classname) {
-		JSONObject back  = checkSession(t);
+	@RequestMapping(value="/loadclasswhiteboardobjects", produces="application/json")
+	public String loadeclasswhiteboardobjects(String token,String roomid) {
+		JSONObject back  = checkSession(token);
 		if(!back.getBoolean("session"))  // session bad
 			return JSONObject.toJSONString(back);
 		else
-			return samAutowiredRoomBiz.loadeclasswhiteboardobjects(classname,back);
+			return samAutowiredRoomBiz.loadeclasswhiteboardobjects(roomid,back);
 	}
 
-	@RequestMapping(value="/loadebanshukuobjects", produces="application/json")
-	public String loadebanshukuobjects(String t) {
-		JSONObject back  = checkSession(t);
+	@RequestMapping(value="/loadteacherbanshukuobjects", produces="application/json")
+	public String loadebanshukuobjects(String token) {
+		JSONObject back  = checkSession(token);
 		if(!back.getBoolean("session"))  // session bad
 			return JSONObject.toJSONString(back);
 		else
@@ -47,19 +47,19 @@ public class TianfangEclassController {
 
 
 
-	@RequestMapping(value="/loadteacherkejianku", produces="application/json")
-	public String loadteacherkejianku(String t) {
+	@RequestMapping(value="/loadteacherkejiankutree", produces="application/json")
+	public String loadteacherkejianku(String token) {
 
-		JSONObject back  = checkSession(t);
+		JSONObject back  = checkSession(token);
 		if(!back.getBoolean("session"))  // session bad
 			return JSONObject.toJSONString(back);
 		else
 		return samAutowiredRoomBiz.loadteacherkejianku(back);
 	}
 
-	@RequestMapping(value="/loadteacherbansuku", produces="application/json")
-	public String loadteacherbansuku(String t) {
-		JSONObject back  = checkSession(t);
+	@RequestMapping(value="/loadteacherbanshukutree", produces="application/json")
+	public String loadteacherbansuku(String token) {
+		JSONObject back  = checkSession(token);
 		if(!back.getBoolean("session"))  // session bad
 			return JSONObject.toJSONString(back);
 		else
@@ -67,53 +67,65 @@ public class TianfangEclassController {
 
 	}
 
-	@RequestMapping(value="/loadteacherroomboardsku", produces="application/json")
-	public String loadteacherroomboardsku(String t,String classname) {
-		JSONObject back  = checkSession(t);
+	@RequestMapping(value="/loadclasswhiteboardsequence", produces="application/json")
+	public String loadclasswhiteboardsequence(String token,String roomid) {
+		JSONObject back  = checkSession(token);
 		if(!back.getBoolean("session"))  // session bad
 			return JSONObject.toJSONString(back);
 		else
-			return samAutowiredRoomBiz.loadteacherroomboardsku(back,classname);
+			return samAutowiredRoomBiz.loadteacherroomboardsku(back,roomid);
 
 
 	}
 
 
 
-	@RequestMapping(value= "/saveteacherkejianku", method=RequestMethod.POST, produces="application/json")
+	@RequestMapping(value= "/saveteacherkejiankutree", method=RequestMethod.POST, produces="application/json")
 	@ResponseBody
-	public String saveteacherkejianku(String t, @RequestBody JSONObject kejianku)
+	public String saveteacherkejiankutree(@RequestBody JSONObject meta)
 	{
-		JSONObject back  = checkSession(t);
+		String token = meta.getString("token");
+		JSONObject kejiankutree = meta.getJSONObject("kejiankutree");
+
+		JSONObject back  = checkSession(token);
 		if(!back.getBoolean("session"))  // session bad
 			return JSONObject.toJSONString(back);
 		else
-			return samAutowiredRoomBiz.saveteacherkejianku(back, kejianku.toJSONString());
+			return samAutowiredRoomBiz.saveteacherkejianku(back, kejiankutree.toJSONString());
 	}
 
 
 
-	@RequestMapping(value= "/saveteacherbanshuku", method=RequestMethod.POST, produces="application/json")
+	@RequestMapping(value= "/saveteacherbanshukutree", method=RequestMethod.POST, produces="application/json")
 	@ResponseBody
-	public String saveteacherbanshuku(String t, @RequestBody JSONObject banshuku)
+	public String saveteacherbanshukutree( @RequestBody JSONObject meta)
 	{
-		JSONObject back  = checkSession(t);
+		String token = meta.getString("token");
+		JSONObject banshukutree = meta.getJSONObject("banshukutree");
+
+
+		JSONObject back  = checkSession(token);
 		if(!back.getBoolean("session"))  // session bad
 			return JSONObject.toJSONString(back);
 		else
-			return samAutowiredRoomBiz.saveteacherbanshuku(back, banshuku.toJSONString());
+			return samAutowiredRoomBiz.saveteacherbanshuku(back, banshukutree.toJSONString());
 
 	}
-	@RequestMapping(value= "/saveteacherroomboardsku", method=RequestMethod.POST, produces="application/json")
+	@RequestMapping(value= "/saveclasswhiteboardsequence", method=RequestMethod.POST, produces="application/json")
 	@ResponseBody
-	public String saveteacherroomboardsku(String t, String classname, @RequestBody JSONObject roomboardsku)
+	public String saveclasswhiteboardsequence(@RequestBody JSONObject meta)
 	{
 
-		JSONObject back  = checkSession(t);
+		String token = meta.getString("token");
+		String roomid = meta.getString("roomid");
+
+		JSONObject whiteboardsequence = meta.getJSONObject("whiteboardsequence");
+
+		JSONObject back  = checkSession(token);
 		if(!back.getBoolean("session"))  // session bad
 			return JSONObject.toJSONString(back);
 		else
-			return samAutowiredRoomBiz.saveteacherroomboardsku(back, classname,roomboardsku.toJSONString());
+			return samAutowiredRoomBiz.saveteacherroomboardsku(back, roomid,whiteboardsequence.toJSONString());
 
 	}
 
@@ -159,8 +171,11 @@ public class TianfangEclassController {
 
 	@RequestMapping(value= "/loadlessontable", method=RequestMethod.POST, produces="application/json")
 	@ResponseBody
-	public String loadlessontable(String token,@RequestBody JSONObject meta)
+	public String loadlessontable(@RequestBody JSONObject meta)
 	{
+
+		String token = meta.getString("token");
+
 		JSONObject back  = checkSession(token);
 		if(!back.getBoolean("session"))  // session bad
 			return JSONObject.toJSONString(back);
@@ -177,18 +192,20 @@ public class TianfangEclassController {
 
 	@RequestMapping(value= "/joinclassroom", method=RequestMethod.POST, produces="application/json")
 	@ResponseBody
-	public String joinclassroom(String token, @RequestBody JSONObject meta)
+	public String joinclassroom( @RequestBody JSONObject meta)
 	{
+
+		String token = meta.getString("token");
 
 		JSONObject back  = checkSession(token);
 		if(!back.getBoolean("session"))  // session bad
 			 return JSONObject.toJSONString(back);
 		else
 		{
-			String targetClassroom = (String)meta.get("targetClassroom");
-			int action =  meta.getIntValue("action");
+			String roomid = (String)meta.get("roomid");
+			int roomaction =  meta.getIntValue("roomaction");
 
-			return  samAutowiredRoomBiz.joinclassroom(back,targetClassroom,action);
+			return  samAutowiredRoomBiz.joinclassroom(back,roomid,roomaction);
 
 		}
 
@@ -199,10 +216,12 @@ public class TianfangEclassController {
 
 
 
-	@RequestMapping(value= "/perteacherkejian_banshuweihu", method=RequestMethod.POST, produces="application/json")
+	@RequestMapping(value= "/jointeacherskillweihu", method=RequestMethod.POST, produces="application/json")
 	@ResponseBody
-	public String perteacherkejian_banshuweihu(String token, @RequestBody JSONObject meta)
+	public String jointeacherskillweihu(@RequestBody JSONObject meta)
 	{
+
+		String token = meta.getString("token");
 
 		JSONObject back  = checkSession(token);
 		if(!back.getBoolean("session"))  // session bad
